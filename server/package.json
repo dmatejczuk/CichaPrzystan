@@ -1,0 +1,21 @@
+{
+  "name": "cicha-przystan-server",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^4.22.3",
+    "geokdbush": "^2.1.0",
+    "kdbush": "^4.1.0"
+  },
+  "private": true
+}

@@ -1,0 +1,30 @@
+services:
+  pipeline:
+    build: ./data-pipeline
+    profiles: ["pipeline"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      - DATA_DIR=/data
+    volumes:
+      - ./data:/data
+      - ./data-pipeline:/app
+
+  server:
+    build: ./server
+    ports: ["3000:3000"]
+    environment:
+      - DATA_DIR=/data
+    volumes:
+      - ./data:/data:ro
+      - ./server/src:/app/src
+
+  client:
+    build: ./client
+    ports: ["5173:5173"]
+    environment:
+      - API_URL=http://server:3000
+    volumes:
+      - ./client/src:/app/src
+    depends_on: [server]

@@ -1,0 +1,12 @@
+data/*
+!data/.gitkeep
+.env
+node_modules
+dist
+__pycache__
+.~lock.*
+# raw data must never be committed, wherever it lands
+*.csv
+*.csv.gz
+*.pbf
+*.geojson
