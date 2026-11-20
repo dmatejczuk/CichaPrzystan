@@ -1,4 +1,4 @@
-// All HTTP calls to the Express API live here.
+import { mockPlaces } from './data/mockPlaces.js'
 
 async function getJson(url) {
   const res = await fetch(url)
@@ -6,10 +6,18 @@ async function getJson(url) {
   return res.json()
 }
 
-// TODO: fetchStays({ bbox, noCoverageOnly })
-// TODO: fetchStay(id)
-// TODO: fetchCoverage({ lat, lon, operator })
-// TODO: fetchOperators()
-// TODO: fetchDeadZonesMeta()
+export async function searchPlaces(query) {
+  const text = query.trim().toLowerCase()
+  if (!text) return mockPlaces
+  return mockPlaces.filter((place) => `${place.name} ${place.city}`.toLowerCase().includes(text))
+}
+
+export async function fetchNearbyPlaces() {
+  return mockPlaces
+}
+
+export async function fetchRandomPlace() {
+  return mockPlaces[Math.floor(Math.random() * mockPlaces.length)]
+}
 
 export { getJson }

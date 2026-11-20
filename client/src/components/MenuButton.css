@@ -1,0 +1,14 @@
+.menu-button {
+  position: absolute;
+  top: var(--gap);
+  left: var(--gap);
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--menu-button-size);
+  height: var(--menu-button-size);
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: 10px;
+}
