@@ -1,13 +1,6 @@
-"""Point coverage check, shared by stays_coverage.py.
+"""Point coverage check based on OpenCelliD cells.
 
-The server (server/src/coverage.js) must implement the same rules:
-- a cell is a circle with radius = range (meters),
-- take the 64 nearest cells within 60 km of the point,
-- margin = distance - range; margin <= 0 means coverage from that operator,
-- no coverage: distance_to_coverage_m = min(margin), direction/bearing point
-  to the cell with the smallest margin,
-- no cells within 60 km: no data (has_coverage = false, note set).
-Distances are great-circle (haversine) with EARTH_RADIUS_M.
+The server implementation (server/src/coverage.js) must stay consistent with this module.
 """
 
 import math
@@ -24,7 +17,7 @@ NO_TOWERS_NOTE = "no towers within 60 km"
 
 
 def to_xyz(lon, lat):
-    """Lon/lat in degrees -> unit vectors on a sphere (works for scalars and arrays)."""
+    """Convert lon/lat in degrees to Cartesian coordinates on the unit sphere."""
     lon = np.radians(lon)
     lat = np.radians(lat)
     cos_lat = np.cos(lat)
@@ -38,7 +31,7 @@ def haversine_m(lon1, lat1, lon2, lat2):
 
 
 def bearing_deg(lon1, lat1, lon2, lat2):
-    """Initial bearing from point 1 to point 2, 0 = north, clockwise."""
+    """Initial bearing in degrees, clockwise from north."""
     lon1, lat1, lon2, lat2 = map(math.radians, (lon1, lat1, lon2, lat2))
     dlon = lon2 - lon1
     y = math.sin(dlon) * math.cos(lat2)
@@ -51,7 +44,6 @@ def direction_code(bearing):
 
 
 def chord_for_distance(distance_m):
-    """Straight-line distance on the unit sphere for a great-circle distance."""
     return 2 * math.sin(distance_m / (2 * EARTH_RADIUS_M))
 
 
@@ -90,6 +82,7 @@ class CoverageIndex:
             return self._no_towers()
 
         k = min(MAX_CELLS, len(ids))
+        # Query slightly beyond the search radius; the exact limit is enforced with haversine below.
         chord, pos = tree.query(
             to_xyz(lon, lat), k=k, distance_upper_bound=chord_for_distance(SEARCH_RADIUS_M) * 1.0001
         )
@@ -140,7 +133,6 @@ class CoverageIndex:
 
 
 if __name__ == "__main__":
-    # Quick manual check: python coverage.py LAT LON [OPERATOR]
     import json
     import os
     import sys

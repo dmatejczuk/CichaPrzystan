@@ -1,12 +1,7 @@
-"""Step 3: dead zone raster for the whole of Poland ("circle stamping").
+"""Generate the dead zone overlay for Poland (dead_zones.png, dead_zones.json).
 
-Input:  towers_pl.csv, poland_border.geojson
-Output: dead_zones.png  RGBA overlay; transparent = coverage or outside Poland,
-                        purple = no coverage, darker the farther to coverage (0-3 km)
-        dead_zones.json image bounds for Leaflet ImageOverlay + summary
-
-The grid is square in Web Mercator (rows evenly spaced in Mercator y), so the PNG
-lines up exactly with Leaflet's ImageOverlay. A cell is ~250 m at mid latitude.
+Coverage is computed by circle stamping on a ~250 m grid. Rows are evenly spaced in
+Web Mercator, so the image aligns with Leaflet's ImageOverlay without reprojection.
 """
 
 import json
@@ -54,7 +49,7 @@ class Grid:
     def __init__(self, bbox, cell_size_m):
         min_lon, min_lat, max_lon, max_lat = bbox
         mid_lat = math.radians((min_lat + max_lat) / 2)
-        # Step in radians, identical for Mercator x (= lon) and Mercator y
+        # Equal step in Mercator x and y gives square pixels.
         self.step = cell_size_m / (EARTH_RADIUS_M * math.cos(mid_lat))
         self.west = min_lon
         self.y_top = float(mercator_y(max_lat))
@@ -94,7 +89,7 @@ def stamp_coverage(grid, masts):
         c1 = min(int(grid.col(lon + dlon)) + 2, grid.width)
         if r0 >= r1 or c0 >= c1:
             continue
-        # Local equirectangular distance; error is negligible below 15 km
+        # Local equirectangular approximation; the error is negligible for ranges up to 15 km.
         dy = (lat_rad[r0:r1] - math.radians(lat)) * EARTH_RADIUS_M
         dx = (lon_rad[c0:c1] - math.radians(lon)) * EARTH_RADIUS_M * math.cos(math.radians(lat))
         inside = dy[:, None] ** 2 + dx[None, :] ** 2 <= radius ** 2
@@ -103,10 +98,10 @@ def stamp_coverage(grid, masts):
 
 
 def load_border_areas(path=BORDER_FILE):
-    """Land area of Poland as a list of areas, each a list of polygons (outer ring + holes).
+    """Load land polygons from poland_border.geojson.
 
-    poland_border.geojson holds the 16 voivodeships of relation r49715; unlike the
-    country relation they end at the coastline (no territorial sea).
+    The file contains voivodeships rather than the country relation, because the latter
+    also includes territorial waters.
     """
     with open(path, encoding="utf-8") as f:
         features = json.load(f)["features"]
@@ -130,7 +125,7 @@ def rasterize_border(grid, areas):
         return list(zip(cols.tolist(), rows.tolist()))
 
     result = np.zeros((grid.height, grid.width), dtype=bool)
-    # One mask per area, so holes of one area never erase a neighbouring area
+    # Rasterize each area separately so that holes cannot remove neighbouring areas.
     for polygons in areas:
         mask = Image.new("L", (grid.width, grid.height), 0)
         draw = ImageDraw.Draw(mask)
@@ -144,7 +139,6 @@ def rasterize_border(grid, areas):
 
 
 def distance_to_coverage(lon, lat, masts):
-    """Min over the nearest masts of (great-circle distance - range), in meters."""
     tree = cKDTree(to_xyz(masts["lon"].to_numpy(), masts["lat"].to_numpy()))
     ranges = masts["range"].to_numpy(dtype=np.float64)
     k = min(NEAREST_MASTS, len(masts))
@@ -167,7 +161,6 @@ def render_png(grid, dead_rows, dead_cols, distance):
 
 
 def farthest_spots(lon, lat, distance):
-    """Top spots farthest from coverage, at least TOP_SPOTS_MIN_SEPARATION_M apart."""
     order = np.argsort(distance)[::-1]
     spots = []
     for i in order:
@@ -215,7 +208,7 @@ def main():
 
     summary = {
         "image": OUTPUT_PNG.name,
-        # Leaflet order: [[south, west], [north, east]]
+        # Leaflet LatLngBounds: [[south, west], [north, east]]
         "bounds": [[round(grid.south, 6), round(grid.west, 6)], [round(grid.north, 6), round(grid.east, 6)]],
         "width": grid.width,
         "height": grid.height,

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Downloads missing inputs and runs data preparation steps 1-4.
-# Usage (from repo root): docker compose run --rm pipeline
+# Data preparation pipeline.
+# Usage (from the repository root): docker compose run --rm pipeline
 set -euo pipefail
 
 DATA_DIR="${DATA_DIR:-/data}"
@@ -21,7 +21,7 @@ trap 'rm -rf "$WORK_DIR"' EXIT
 
 log() { echo "[pipeline] $*"; }
 
-# Rebuild target when it is missing or older than its source
+# Succeeds if the target ($1) is missing or older than its source ($2).
 needs_build() { [ ! -s "$1" ] || [ "$2" -nt "$1" ]; }
 
 download_towers() {
@@ -36,7 +36,7 @@ download_towers() {
   log "downloading towers from OpenCelliD"
   local tmp="$WORK_DIR/260.csv.gz"
   curl -fsSL --retry 3 -o "$tmp" "$OPENCELLID_URL&token=$OPENCELLID_TOKEN"
-  # OpenCelliD answers errors (bad token, rate limit) with text/HTML instead of a file
+  # OpenCelliD responds with an HTML/text page on errors (e.g. invalid token, rate limit).
   if ! gzip -t "$tmp" 2>/dev/null; then
     log "error: OpenCelliD returned an error instead of the file:"
     sed 's/<[^>]*>/ /g' "$tmp" | tr -s ' \r\n\t' ' ' | head -c 300
@@ -76,8 +76,7 @@ extract_border() {
   osmium getid --add-referenced "$OSM_PBF" "$POLAND_RELATION" -o "$WORK_DIR/border.osm.pbf" --overwrite
   osmium export "$WORK_DIR/border.osm.pbf" --geometry-types=polygon --attributes=type,id \
     -o "$WORK_DIR/border_all.geojson" --overwrite
-  # The country relation includes territorial sea; its voivodeships (admin_level=4,
-  # pulled in as subareas) end at the coastline, so keep only those.
+  # Keep voivodeships only; the country relation also includes territorial waters.
   python - "$WORK_DIR/border_all.geojson" "$BORDER_GEOJSON" <<'PY'
 import json, sys
 with open(sys.argv[1], encoding="utf-8") as f:
