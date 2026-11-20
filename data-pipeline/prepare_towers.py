@@ -1,8 +1,6 @@
-"""Step 1: clean OpenCelliD cells for Poland.
+"""Clean OpenCelliD cells for Poland.
 
-Input:  260.csv.gz (OpenCelliD, MCC 260; national file usually has no header)
-Output: towers_pl.csv  (radio, operator, lon, lat, range) for Python steps
-        towers_pl.json [{operator, lon, lat, range}] for the Express server
+Writes towers_pl.csv (used by the pipeline) and towers_pl.json (used by the server).
 """
 
 import gzip
@@ -29,13 +27,13 @@ MIN_SAMPLES = 2
 OPERATORS = {1: "Plus", 2: "T-Mobile", 3: "Orange", 6: "Play"}
 OTHER_OPERATOR = "other"
 
-# Used when OpenCelliD reports range = 0
+# Default range per radio type, used when OpenCelliD reports range = 0.
 DEFAULT_RANGE_M = {"GSM": 5000, "UMTS": 3000, "LTE": 4000, "NR": 1500}
 FALLBACK_RANGE_M = 4000
 MIN_RANGE_M = 300
 MAX_RANGE_M = 15000
 
-# Generous box around Poland; cells outside it have broken coordinates
+# Cells outside this bounding box are treated as having invalid coordinates.
 VALID_BBOX = (13.0, 48.0, 25.0, 56.0)
 
 CHUNK_SIZE = 500_000

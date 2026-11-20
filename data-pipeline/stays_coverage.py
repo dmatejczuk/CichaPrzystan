@@ -1,11 +1,4 @@
-"""Step 4: coverage for every stay (guest house, hut, camp site, ...).
-
-Input:  stays.geojson (osmium export of tourism=* objects), towers_pl.csv,
-        poland_border.geojson (stays outside Poland are skipped)
-Output: stays_coverage.geojson with Point features only; properties:
-        id, name, type, website, phone, has_coverage, operators,
-        distance_to_coverage_m, direction, note
-"""
+"""Compute coverage for every stay and write stays_coverage.geojson (point features only)."""
 
 import json
 import os
@@ -31,11 +24,10 @@ OSM_TYPE_PREFIX = {"node": "n", "way": "w", "relation": "r"}
 
 
 class PolandMask:
-    """Point-in-Poland test on the dead zone grid, grown by one cell for coastal stays."""
-
     def __init__(self):
         self.grid = Grid(BBOX, CELL_SIZE_M)
         mask = rasterize_border(self.grid, load_border_areas(DATA_DIR / "poland_border.geojson"))
+        # Dilate by one cell to keep stays located directly on the coastline.
         grown = mask.copy()
         grown[1:, :] |= mask[:-1, :]
         grown[:-1, :] |= mask[1:, :]
@@ -50,7 +42,6 @@ class PolandMask:
 
 
 def iter_coordinates(coords):
-    """Yield every [lon, lat] pair from nested GeoJSON coordinates."""
     if coords and isinstance(coords[0], (int, float)):
         yield coords
     else:
@@ -59,11 +50,10 @@ def iter_coordinates(coords):
 
 
 def representative_point(geometry):
-    """Point as is; building or area -> mean of its vertices."""
     if geometry["type"] == "Point":
         lon, lat = geometry["coordinates"][:2]
         return lon, lat
-    # Unique vertices, so the closing point of a ring is not counted twice
+    # Use unique vertices so the closing point of each ring is not counted twice.
     points = list({(p[0], p[1]) for p in iter_coordinates(geometry["coordinates"])})
     lon = sum(p[0] for p in points) / len(points)
     lat = sum(p[1] for p in points) / len(points)

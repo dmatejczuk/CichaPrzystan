@@ -17,6 +17,19 @@ docker compose run --rm pipeline       # builds data/ outputs
 docker compose up                      # app on http://localhost:5173
 ```
 
+## API (server, port 3000)
+
+| Endpoint | Description |
+|---|---|
+| `GET /api/coverage?lat&lon&operator` | Coverage at a point (same logic as `data-pipeline/coverage.py`); `operator` optional |
+| `GET /api/stays?bbox=minLon,minLat,maxLon,maxLat&no_coverage_only=true` | Stays as GeoJSON FeatureCollection, farthest from coverage first, max 1000 (`total` = all matches) |
+| `GET /api/stays/:id` | One stay (e.g. `n123`, `w456`) or 404 |
+| `GET /api/operators` | Operators present in the tower data |
+| `GET /api/health` | Status and number of loaded towers and stays |
+| `GET /dead-zones/dead_zones.png`, `/dead-zones/dead_zones.json` | Dead zone overlay and its bounds |
+
+Errors are JSON: `{ "error": "..." }` (400 bad parameters, 404 not found, 503 data not generated yet).
+
 ## License
 
 Code: MIT, see [LICENSE](LICENSE).
