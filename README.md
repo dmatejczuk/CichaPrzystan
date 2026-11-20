@@ -8,6 +8,7 @@ Map of accommodation in Poland located in places without mobile coverage.
 - `data-pipeline/` – Python data preparation (run once)
 - `server/` – Express API (Node.js 22)
 - `client/` – Vite + React frontend
+- `docs/` – documentation ([API reference](docs/API.md))
 
 ## Quick start (Windows PowerShell)
 
@@ -29,6 +30,8 @@ docker compose up                      # app on http://localhost:5173
 | `GET /dead-zones/dead_zones.png`, `/dead-zones/dead_zones.json` | Dead zone overlay and its bounds |
 
 Errors are JSON: `{ "error": "..." }` (400 bad parameters, 404 not found, 503 data not generated yet).
+
+Parameters, response fields and examples for every endpoint: [docs/API.md](docs/API.md).
 
 ## License
 
