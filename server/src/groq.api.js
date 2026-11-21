@@ -27,7 +27,6 @@ async function summarise(inputData) {
       }
     ];
 
-    console.log(messages);
 
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
@@ -50,9 +49,6 @@ async function summarise(inputData) {
 
     if (!response.ok) {
       console.error("Groq API Error:", result);
-
-      var api = process.env.GROQ_API_KEY;
-      console.log(api);
 
       return error_message;
     }

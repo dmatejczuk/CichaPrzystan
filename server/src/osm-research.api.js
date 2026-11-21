@@ -1,6 +1,4 @@
-
 const WIKIDATA_API = "https://www.wikidata.org/w/api.php";
-const COMMONS_API = "https://commons.wikimedia.org/w/api.php";
 
 const USER_AGENT = "NoclegiResearchApp/1.0 (Node.js backend)";
 
@@ -19,6 +17,76 @@ async function fetchJson(url) {
 
     return response.json();
 }
+
+
+// Ustalanie lokalizacji obiektu na podstawie współrzędnych
+// Darmowe API Nominatim (OpenStreetMap), bez klucza API
+async function reverseGeocode(latitude, longitude) {
+    if (latitude == null || longitude == null) {
+        return null;
+    }
+
+    const params = new URLSearchParams({
+        lat: String(latitude),
+        lon: String(longitude),
+        format: "jsonv2",
+        zoom: "18",
+        addressdetails: "1"
+    });
+
+    try {
+        const data = await fetchJson(
+            `https://nominatim.openstreetmap.org/reverse?${params}`
+        );
+
+        const address = data.address || {};
+
+        const locality =
+            address.city ||
+            address.town ||
+            address.village ||
+            address.hamlet ||
+            address.municipality ||
+            address.suburb ||
+            address.city_district ||
+            address.quarter ||
+            address.neighbourhood ||
+            null;
+
+        const region =
+            address.state ||
+            address.province ||
+            address.region ||
+            address.state_district ||
+            null;
+
+        const county =
+            address.county ||
+            address.district ||
+            null;
+
+        const country = address.country || null;
+
+        return {
+            displayName: data.display_name || null,
+            locality,
+            county,
+            region,
+            country,
+            postcode: address.postcode || null,
+            rawAddress: address,
+            coordinates: {
+                latitude,
+                longitude
+            },
+            source: "Nominatim / OpenStreetMap"
+        };
+    } catch (error) {
+        console.warn("Reverse geocoding:", error.message);
+        return null;
+    }
+}
+
 
 // Bezpieczne pobieranie wartości z claims Wikidata
 function getClaimValue(entity, property) {
@@ -201,44 +269,6 @@ async function getWikipedia(osmTags, wikidata) {
     }
 }
 
-// Wyszukiwanie zdjęć w Wikimedia Commons
-async function getCommonsImages(name, limit = 5) {
-    if (!name) return [];
-
-    const params = new URLSearchParams({
-        action: "query",
-        generator: "search",
-        gsrsearch: name,
-        gsrnamespace: "6",
-        gsrlimit: String(limit),
-        prop: "imageinfo",
-        iiprop: "url|extmetadata",
-        iiurlwidth: "800",
-        format: "json"
-    });
-
-    const data = await fetchJson(
-        `${COMMONS_API}?${params}`
-    );
-
-    const pages = Object.values(
-        data.query?.pages || {}
-    );
-
-    return pages.map(page => {
-        const info = page.imageinfo?.[0] || {};
-        const metadata = info.extmetadata || {};
-
-        return {
-            title: page.title,
-            image: info.thumburl || info.url || null,
-            page: info.descriptionurl || null,
-            author: metadata.Artist?.value || null,
-            license: metadata.LicenseShortName?.value || null,
-            licenseUrl: metadata.LicenseUrl?.value || null
-        };
-    }).filter(item => item.image);
-}
 
 // Główna funkcja: zbieranie informacji o obiekcie
 async function researchOsmObject(osmObject) {
@@ -288,6 +318,18 @@ async function researchOsmObject(osmObject) {
             : null
     };
 
+
+    // 1a. Ustalanie lokalizacji na podstawie współrzędnych
+    results.location = null;
+
+    const latitude = results.osm.latitude;
+    const longitude = results.osm.longitude;
+
+    if (latitude != null && longitude != null) {
+        results.location = await reverseGeocode(latitude, longitude);
+    }
+
+
     // 2. Pobieranie dodatkowych danych z Wikidata
     if (tags.wikidata) {
         try {
@@ -309,12 +351,6 @@ async function researchOsmObject(osmObject) {
         console.warn("Wikipedia:", error.message);
     }
 
-    // 4. Wyszukiwanie zdjęć
-    try {
-        results.commons = await getCommonsImages(name);
-    } catch (error) {
-        console.warn("Wikimedia Commons:", error.message);
-    }
 
     // 5. Budowanie tekstu dla AI
     const lines = [];
@@ -329,6 +365,39 @@ async function researchOsmObject(osmObject) {
             lines.push(`${key}: ${value}`);
         }
     }
+
+
+    // Lokalizacja ustalona na podstawie współrzędnych
+    if (results.location) {
+        lines.push("\nLOKALIZACJA USTALONA NA PODSTAWIE WSPÓŁRZĘDNYCH");
+
+        if (results.location.locality) {
+            lines.push(`Najbliższa miejscowość / lokalizacja: ${results.location.locality}`);
+        }
+
+        if (results.location.county) {
+            lines.push(`Powiat: ${results.location.county}`);
+        }
+
+        if (results.location.region) {
+            lines.push(`Region / województwo: ${results.location.region}`);
+        }
+
+        if (results.location.country) {
+            lines.push(`Kraj: ${results.location.country}`);
+        }
+
+        if (results.location.postcode) {
+            lines.push(`Kod pocztowy: ${results.location.postcode}`);
+        }
+
+        if (results.location.displayName) {
+            lines.push(`Pełna lokalizacja: ${results.location.displayName}`);
+        }
+
+        lines.push(`Źródło lokalizacji: ${results.location.source}`);
+    }
+
 
     if (results.wikidata) {
         lines.push("\nDANE WIKIDATA");
@@ -396,35 +465,6 @@ async function researchOsmObject(osmObject) {
         }
     }
 
-    if (results.commons.length) {
-        lines.push("\nZDJĘCIA WIKIMEDIA COMMONS");
-
-        results.commons.forEach((image, index) => {
-            lines.push(`Zdjęcie ${index + 1}: ${image.title}`);
-
-            if (image.page) {
-                lines.push(`Strona zdjęcia: ${image.page}`);
-            }
-
-            if (image.author) {
-                lines.push(`Autor: ${image.author}`);
-            }
-
-            if (image.license) {
-                lines.push(`Licencja: ${image.license}`);
-            }
-
-            if (image.licenseUrl) {
-                lines.push(`Licencja URL: ${image.licenseUrl}`);
-            }
-
-            if (image.image) {
-                lines.push(`Plik: ${image.image}`);
-            }
-        });
-    } else {
-        lines.push("\nNie znaleziono zdjęć w Wikimedia Commons.");
-    }
 
     lines.push("\nOPINIE KLIENTÓW");
     lines.push(
@@ -437,7 +477,7 @@ async function researchOsmObject(osmObject) {
     );
 
 
-    console.log(results);
+    console.log(lines, results);
 
     return {
         text: lines.join("\n"),

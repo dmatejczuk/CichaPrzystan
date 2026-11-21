@@ -23,11 +23,12 @@ STRUKTURA OPISU:
 
 1. TYTUŁ
 Przygotuj atrakcyjny tytuł zawierający nazwę obiektu
-i lokalizację, jeśli są dostępne.
+i lokalizację, jeśli są dostępne. Jeśli tytuł obiektu to "nieznany obiekt", 
+nie używaj tej nazwy, a zamiast tego uzywaj określeń typu "ten obiekt" 
 
 2. POZNAJ TO MIEJSCE
 Stwórz przyjazny, opisowy wstęp przedstawiający obiekt,
-jego lokalizację, charakter oraz najważniejsze cechy.
+jego lokalizację - ale nie współrędne geograficzne, charakter oraz najważniejsze cechy.
 Nie ograniczaj się do wymieniania udogodnień.
 Połącz je w spójną opowieść o miejscu i pobycie.
 
