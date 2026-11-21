@@ -6,6 +6,7 @@ import { createSummaryRouter } from './summary-routes.js'
 import { checkSummarySetup } from './summary.js'
 import { CoverageIndex } from './coverage.js'
 import { StayStore } from './stays.js'
+import { searchPlaces, GeocodeUnavailable } from './geocode.js'
 
 const PORT = Number(process.env.PORT) || 3000
 const DATA_DIR = path.resolve(
@@ -85,7 +86,7 @@ app.use(corsMiddleware)
 app.get('/api/health', (req, res) => {
   res.json({
     status: coverage && stays ? 'ok' : 'missing data',
-    towers: coverage ? coverage.towers.length : 0,
+    towers: coverage ? coverage.towerCount : 0,
     stays: stays ? stays.size : 0,
   })
 })
@@ -108,6 +109,16 @@ app.get('/api/stays', (req, res) => {
   )
 })
 
+app.get('/api/stays/random', (req, res) => {
+  const store = requireData(stays, 'stays_coverage.geojson')
+  const stay = store.random({
+    bbox: parseBbox(req.query.bbox),
+    noCoverageOnly: parseBoolean(req.query.no_coverage_only, 'no_coverage_only'),
+  })
+  if (!stay) throw new HttpError(404, 'no stay matches the given filters')
+  res.json(stay)
+})
+
 app.get('/api/stays/:id', (req, res) => {
   const store = requireData(stays, 'stays_coverage.geojson')
   const stay = store.get(req.params.id)
@@ -116,6 +127,16 @@ app.get('/api/stays/:id', (req, res) => {
 })
 
 app.use('/api/stays', createSummaryRouter(() => stays)) // GET /api/stays/:id/summary
+
+app.get('/api/geocode', async (req, res, next) => {
+  const query = String(req.query.q ?? '').trim()
+  if (query.length < 2) return next(new HttpError(400, 'missing parameter: q (at least 2 characters)'))
+  try {
+    res.json(await searchPlaces(query))
+  } catch (err) {
+    next(err instanceof GeocodeUnavailable ? new HttpError(503, 'place search unavailable') : err)
+  }
+})
 
 app.get('/api/operators', (req, res) => {
   res.json(requireData(coverage, 'towers_pl.json').operators)

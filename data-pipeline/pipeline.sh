@@ -11,9 +11,14 @@ TOWERS_GZ="$DATA_DIR/260.csv.gz"
 OSM_PBF="$DATA_DIR/poland-latest.osm.pbf"
 STAYS_GEOJSON="$DATA_DIR/stays.geojson"
 BORDER_GEOJSON="$DATA_DIR/poland_border.geojson"
+PLACES_GEOJSON="$DATA_DIR/places.geojson"
 OPENCELLID_URL="https://opencellid.org/ocid/downloads?type=mcc&file=260.csv.gz"
 GEOFABRIK_URL="https://download.geofabrik.de/europe/poland-latest.osm.pbf"
+UKE_DIR="$DATA_DIR/uke"
+UKE_PAGE="https://bip.uke.gov.pl/pozwolenia-radiowe/wykaz-pozwolen-radiowych-tresci/stacje-gsm-umts-lte-5gnr-oraz-cdma,12,0.html"
+UKE_BANDS="gsm900 gsm1800 umts900 umts2100 lte700 lte800 lte900 lte1800 lte2100 lte2600 5g700 5g900 5g1800 5g2100 5g2600 5g3600"
 STAY_TYPES="guest_house,chalet,alpine_hut,wilderness_hut,camp_site,hostel,hotel,apartment"
+PLACE_TYPES="city,town,village,hamlet"
 POLAND_RELATION="r49715"
 
 WORK_DIR="$(mktemp -d)"
@@ -57,6 +62,30 @@ download_osm() {
   mv "$tmp" "$OSM_PBF"
 }
 
+# UKE base station permit lists, one XLSX per band. File names carry the publication
+# date, so links are read from the listing page. Delete data/uke/ to refresh them.
+download_uke() {
+  mkdir -p "$UKE_DIR"
+  local page=""
+  for band in $UKE_BANDS; do
+    [ -s "$UKE_DIR/$band.xlsx" ] && continue
+    if [ -z "$page" ]; then
+      log "reading the UKE list of base station permits"
+      page="$(curl -fsSL --retry 3 "$UKE_PAGE")"
+    fi
+    local link
+    link="$(printf '%s' "$page" | grep -o "href=\"[^\"]*/${band}_-_stan_na_[^\"]*\.xlsx\"" | head -n 1 | cut -d'"' -f2)"
+    if [ -z "$link" ]; then
+      log "warning: no UKE file for $band on the listing page, skipped"
+      continue
+    fi
+    log "downloading UKE $band"
+    curl -fsSL --retry 3 -o "$WORK_DIR/$band.xlsx" "https://bip.uke.gov.pl$link"
+    python -c "import sys, zipfile; zipfile.ZipFile(sys.argv[1]).testzip()" "$WORK_DIR/$band.xlsx"       || { log "error: UKE $band is not a valid XLSX file"; exit 1; }
+    mv "$WORK_DIR/$band.xlsx" "$UKE_DIR/$band.xlsx"
+  done
+}
+
 extract_stays() {
   if ! needs_build "$STAYS_GEOJSON" "$OSM_PBF"; then
     log "stays.geojson is up to date"
@@ -65,6 +94,16 @@ extract_stays() {
   log "extracting stays from OSM"
   osmium tags-filter "$OSM_PBF" "nwr/tourism=$STAY_TYPES" -o "$WORK_DIR/stays.osm.pbf" --overwrite
   osmium export "$WORK_DIR/stays.osm.pbf" --attributes=type,id -o "$STAYS_GEOJSON" --overwrite
+}
+
+extract_places() {
+  if ! needs_build "$PLACES_GEOJSON" "$OSM_PBF"; then
+    log "places.geojson is up to date"
+    return
+  fi
+  log "extracting settlements from OSM"
+  osmium tags-filter "$OSM_PBF" "n/place=$PLACE_TYPES" -o "$WORK_DIR/places.osm.pbf" --overwrite
+  osmium export "$WORK_DIR/places.osm.pbf" --geometry-types=point -o "$PLACES_GEOJSON" --overwrite
 }
 
 extract_border() {
@@ -103,8 +142,10 @@ run_step() {
 started=$SECONDS
 download_towers
 download_osm
+download_uke
 run_step prepare_towers.py
 extract_stays
+extract_places
 extract_border
 run_step dead_zones.py
 run_step stays_coverage.py

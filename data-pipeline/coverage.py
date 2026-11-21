@@ -1,4 +1,8 @@
-"""Point coverage check based on OpenCelliD cells.
+"""Point coverage check based on cell transmitters (towers_pl.csv).
+
+Each transmitter is a circle with its range. A point is covered when it lies inside any
+circle within SEARCH_RADIUS_M; otherwise the distance to coverage is the smallest
+(distance - range) over those transmitters.
 
 The server implementation (server/src/coverage.js) must stay consistent with this module.
 """
@@ -10,7 +14,6 @@ import pandas as pd
 from scipy.spatial import cKDTree
 
 EARTH_RADIUS_M = 6_371_000
-MAX_CELLS = 64
 SEARCH_RADIUS_M = 60_000
 DIRECTIONS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
 NO_TOWERS_NOTE = "no towers within 60 km"
@@ -49,12 +52,14 @@ def chord_for_distance(distance_m):
 
 class CoverageIndex:
     def __init__(self, towers):
-        towers = towers.reset_index(drop=True)
+        # Radio types of one site share a position; only the widest range matters.
+        towers = towers.groupby(["operator", "lon", "lat"], sort=False, as_index=False)["range"].max()
         self.operator = towers["operator"].to_numpy()
         self.lon = towers["lon"].to_numpy(dtype=float)
         self.lat = towers["lat"].to_numpy(dtype=float)
         self.range = towers["range"].to_numpy(dtype=float)
         self._xyz = to_xyz(self.lon, self.lat)
+        self.max_range = float(self.range.max()) if len(self.range) else 0.0
         self._trees = {}
 
     @classmethod
@@ -81,13 +86,19 @@ class CoverageIndex:
         if tree is None:
             return self._no_towers()
 
-        k = min(MAX_CELLS, len(ids))
-        # Query slightly beyond the search radius; the exact limit is enforced with haversine below.
-        chord, pos = tree.query(
-            to_xyz(lon, lat), k=k, distance_upper_bound=chord_for_distance(SEARCH_RADIUS_M) * 1.0001
-        )
-        chord, pos = np.atleast_1d(chord), np.atleast_1d(pos)
-        cells = ids[pos[np.isfinite(chord)]]
+        point = to_xyz(lon, lat)
+        nearest_chord, nearest = tree.query(point, distance_upper_bound=chord_for_distance(SEARCH_RADIUS_M) * 1.0001)
+        if not np.isfinite(nearest_chord):
+            return self._no_towers()
+        cell = ids[nearest]
+        nearest_margin = haversine_m(lon, lat, self.lon[cell], self.lat[cell]) - self.range[cell]
+
+        # Only transmitters with distance - range <= max(nearest_margin, 0) can cover the
+        # point or be closer to coverage, and all of them lie within this radius.
+        radius = min(max(nearest_margin, 0) + self.max_range, SEARCH_RADIUS_M)
+        # Query slightly beyond the radius; the exact limit is enforced with haversine below.
+        cells = ids[np.asarray(tree.query_ball_point(point, chord_for_distance(radius) * 1.0001), dtype=int)]
+        cells.sort()
 
         distance = haversine_m(lon, lat, self.lon[cells], self.lat[cells])
         within = distance <= SEARCH_RADIUS_M

@@ -1,4 +1,5 @@
-// Point coverage check. Must stay consistent with data-pipeline/coverage.py.
+// Point coverage check. Each transmitter is a circle with its range; see
+// data-pipeline/coverage.py for the model. Must stay consistent with that module.
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -6,7 +7,6 @@ import KDBush from 'kdbush'
 import { around } from 'geokdbush'
 
 const EARTH_RADIUS_M = 6_371_000
-const MAX_CELLS = 64
 const SEARCH_RADIUS_M = 60_000
 const DIRECTIONS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
 const NO_TOWERS_NOTE = 'no towers within 60 km'
@@ -52,9 +52,24 @@ function noTowers() {
   }
 }
 
+// Radio types of one site share a position; only the widest range matters.
+function mergeSites(towers) {
+  const sites = new Map()
+  for (const t of towers) {
+    const key = `${t.operator}|${t.lon}|${t.lat}`
+    const site = sites.get(key)
+    if (!site) sites.set(key, { operator: t.operator, lon: t.lon, lat: t.lat, range: t.range })
+    else if (t.range > site.range) site.range = t.range
+  }
+  return [...sites.values()]
+}
+
 export class CoverageIndex {
   constructor(towers) {
+    this.towerCount = towers.length
+    towers = mergeSites(towers)
     this.towers = towers
+    this.maxRange = towers.reduce((max, t) => Math.max(max, t.range), 0)
     this.operators = [...new Set(towers.map((t) => t.operator))].sort()
     this.index = new KDBush(towers.length)
     for (const t of towers) this.index.add(t.lon, t.lat)
@@ -76,8 +91,16 @@ export class CoverageIndex {
     }
 
     const predicate = operator === null ? undefined : (id) => this.towers[id].operator === operator
-    // Query slightly beyond the search radius; the exact limit is enforced with haversineM below.
-    const ids = around(this.index, lon, lat, MAX_CELLS, (SEARCH_RADIUS_M / 1000) * 1.0001, predicate)
+    const [nearestId] = around(this.index, lon, lat, 1, (SEARCH_RADIUS_M / 1000) * 1.0001, predicate)
+    if (nearestId === undefined) return noTowers()
+    const nearest = this.towers[nearestId]
+    const nearestMargin = haversineM(lon, lat, nearest.lon, nearest.lat) - nearest.range
+
+    // Only transmitters with distance - range <= max(nearestMargin, 0) can cover the
+    // point or be closer to coverage, and all of them lie within this radius.
+    const radius = Math.min(Math.max(nearestMargin, 0) + this.maxRange, SEARCH_RADIUS_M)
+    // Query slightly beyond the radius; the exact limit is enforced with haversineM below.
+    const ids = around(this.index, lon, lat, Infinity, (radius / 1000) * 1.0001, predicate).sort((a, b) => a - b)
 
     const cells = []
     for (const id of ids) {

@@ -15,8 +15,10 @@ Data is loaded into memory once at startup from the `data/` directory (`DATA_DIR
 | --- | --- |
 | [`GET /api/coverage`](#get-apicoverage) | Coverage at a given point |
 | [`GET /api/stays`](#get-apistays) | Stays in an area, as GeoJSON |
+| [`GET /api/stays/random`](#get-apistaysrandom) | A random stay |
 | [`GET /api/stays/:id`](#get-apistaysid) | A single stay |
 | [`GET /api/stays/:id/summary`](#get-apistaysidsummary) | Stay data plus AI summary, Wikipedia extract and photos |
+| [`GET /api/geocode`](#get-apigeocode) | Find a town, region or voivodeship by name |
 | [`GET /api/operators`](#get-apioperators) | List of mobile operators |
 | [`GET /api/health`](#get-apihealth) | Server status and loaded data |
 | [`GET /dead-zones/...`](#dead-zone-overlay) | Dead zone image and its bounds |
@@ -34,7 +36,7 @@ Errors always have the form `{ "error": "..." }`.
 
 ## GET /api/coverage
 
-Checks mobile coverage at any point, computed on request. It uses the same logic as [`data-pipeline/coverage.py`](../data-pipeline/coverage.py): each cell is a circle with radius `range`, and the 64 nearest cells within 60 km are considered.
+Checks mobile coverage at any point, computed on request. It uses the same logic as [`data-pipeline/coverage.py`](../data-pipeline/coverage.py): each transmitter is a circle with radius `range`, and every transmitter within 60 km is considered. Transmitters come from OpenCelliD measurements and the UKE list of base station permits (see [Data sources](#data-sources)).
 
 | Parameter | Required | Description |
 | --- | --- | --- |
@@ -107,6 +109,8 @@ Example: `GET /api/stays?bbox=22.0,49.0,23.0,49.5&no_coverage_only=true`
         "id": "n123456",
         "name": "Niedźwiedzia Dolina",
         "type": "chalet",
+      "city": "Wetlina",
+        "city": "Wetlina",
         "website": "https://example.com",
         "phone": "+48 600 000 000",
         "has_coverage": false,
@@ -129,6 +133,7 @@ Example: `GET /api/stays?bbox=22.0,49.0,23.0,49.5&no_coverage_only=true`
 | `id` | string | OSM identifier: `n` = node, `w` = way (building or area), `r` = relation, followed by the number |
 | `name` | string \| null | Name from OSM; may be missing |
 | `type` | string | Stay type, e.g. `chalet`, `hotel` (see [Value reference](#value-reference)) |
+| `city` | string | Locality from the OSM address (`addr:city`, `addr:place`); when the stay has no address, the nearest settlement (city, town, village or hamlet) |
 | `website` | string \| null | Website |
 | `phone` | string \| null | Phone number |
 | `has_coverage` | boolean | Whether the stay has coverage |
@@ -138,6 +143,19 @@ Example: `GET /api/stays?bbox=22.0,49.0,23.0,49.5&no_coverage_only=true`
 | `note` | string \| null | `"no towers within 60 km"` when there is no data, otherwise `null` |
 
 Errors: 400 for an invalid `bbox` (not 4 numbers, or min > max) or an invalid `no_coverage_only`; 503 when `stays_coverage.geojson` is missing.
+
+## GET /api/stays/random
+
+Returns one random stay as a single `Feature` (same shape as an item of `features` in `/api/stays`). Used by the "pick a random place" button.
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `bbox` | no | Limit the draw to an area, same format as in `/api/stays` |
+| `no_coverage_only` | no | `true` / `1` draws only from stays without coverage |
+
+Example: `GET /api/stays/random?no_coverage_only=true`
+
+Errors: 400 for an invalid parameter; 404 `{ "error": "no stay matches the given filters" }`; 503 when `stays_coverage.geojson` is missing.
 
 ## GET /api/stays/:id
 
@@ -169,6 +187,7 @@ Example: `GET /api/stays/n26860235/summary`
       "id": "n26860235",
       "name": "Niedźwiedzia Dolina",
       "type": "chalet",
+      "city": "Wetlina",
       "website": "https://example.com",
       "phone": null,
       "has_coverage": false,
@@ -204,6 +223,33 @@ Example: `GET /api/stays/n26860235/summary`
 
 Errors: 404 `{ "error": "stay not found: xyz" }` when no stay has that `id`; 503 `{ "error": "summary unavailable" }` when the research or AI step fails (missing `GROQ_API_KEY` or `system_prompt.txt`, Groq error; the server log has the reason); 503 `data not loaded` when the pipeline has not been run.
 
+## GET /api/geocode
+
+Finds places in Poland by name: towns, villages, regions, voivodeships. The server forwards the query to the public [Nominatim](https://nominatim.org) API (OpenStreetMap data), throttles it to one request per second as its usage policy requires and caches results in memory.
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `q` | yes | Place name, at least 2 characters, e.g. `Kraków`, `małopolskie`, `Ustrzyki Dolne` |
+
+Example: `GET /api/geocode?q=Kraków`
+
+```json
+[
+  {
+    "name": "Kraków",
+    "display_name": "Kraków, województwo małopolskie, Polska",
+    "type": "administrative",
+    "lat": 50.0469432,
+    "lon": 19.9971534,
+    "bbox": [19.7922355, 49.9676668, 20.2173455, 50.1261338]
+  }
+]
+```
+
+Up to 5 results, best match first; an empty array when nothing is found. `bbox` uses the same `[minLon, minLat, maxLon, maxLat]` order as `/api/stays`, so it can be passed on directly. `type` is the Nominatim address type, e.g. `city`, `town`, `village`, `state` (voivodeship).
+
+Errors: 400 when `q` is missing or shorter than 2 characters; 503 `{ "error": "place search unavailable" }` when Nominatim cannot be reached.
+
 ## GET /api/operators
 
 Takes no parameters and returns the operators present in the data, sorted alphabetically. Use these names for the `operator` parameter of `/api/coverage`.
@@ -217,7 +263,7 @@ Takes no parameters and returns the operators present in the data, sorted alphab
 Reports whether the server is running and how much data it has loaded. Use it to check that the pipeline has been run.
 
 ```json
-{ "status": "ok", "towers": 92914, "stays": 27348 }
+{ "status": "ok", "towers": 178808, "stays": 27316 }
 ```
 
 When data is missing it returns `"status": "missing data"` with zero counts (status 200).
@@ -240,10 +286,10 @@ Two static files for the "show dead zones" map layer. These are the only files s
   "cell_size_m": 250,
   "max_color_distance_m": 3000,
   "cells_in_poland": 5068412,
-  "cells_without_coverage": 1471361,
-  "share_without_coverage": 0.2903,
+  "cells_without_coverage": 73239,
+  "share_without_coverage": 0.0145,
   "farthest_from_coverage": [
-    { "lat": 50.37026, "lon": 23.58875, "distance_to_coverage_m": 36604 }
+    { "lat": 49.00743, "lon": 22.88892, "distance_to_coverage_m": 10548 }
   ]
 }
 ```
@@ -277,14 +323,14 @@ The API returns English codes; the Polish UI labels are defined in [`client/src/
 
 | Code (OSM `tourism`) | Meaning | Polish UI label | Count |
 | --- | --- | --- | --- |
-| `guest_house` | Guest house | Pensjonat | 9799 |
-| `chalet` | Chalet / cabin | Domek | 6687 |
-| `hotel` | Hotel | Hotel | 6333 |
-| `camp_site` | Campsite | Pole namiotowe | 1802 |
-| `apartment` | Apartment | Apartament | 1281 |
-| `hostel` | Hostel | Hostel | 1254 |
-| `alpine_hut` | Mountain hut | Schronisko górskie | 129 |
-| `wilderness_hut` | Wilderness hut | Chatka | 63 |
+| `guest_house` | Guest house | Pensjonat | 9787 |
+| `chalet` | Chalet / cabin | Domek | 6686 |
+| `hotel` | Hotel | Hotel | 6326 |
+| `camp_site` | Campsite | Pole namiotowe | 1798 |
+| `apartment` | Apartment | Apartament | 1278 |
+| `hostel` | Hostel | Hostel | 1253 |
+| `alpine_hut` | Mountain hut | Schronisko górskie | 127 |
+| `wilderness_hut` | Wilderness hut | Chatka | 61 |
 
 ### Operators
 
@@ -299,11 +345,24 @@ All requests go through [`client/src/api.js`](../client/src/api.js) (axios). Com
 | `fetchCoverage({ lat, lon, operator })` | `GET /api/coverage` | coverage object |
 | `fetchStays({ bbox, noCoverageOnly })` | `GET /api/stays` | GeoJSON `FeatureCollection` |
 | `fetchStay(id)` | `GET /api/stays/:id` | one `Feature` |
+| `fetchRandomStay({ noCoverageOnly })` | `GET /api/stays/random` | one `Feature` |
+| `fetchGeocode(q)` | `GET /api/geocode` | list of places with `bbox` |
 | `fetchStaySummary(id)` | `GET /api/stays/:id/summary` | stay + AI summary object |
 | `fetchOperators()` | `GET /api/operators` | `string[]` |
 | `fetchHealth()` | `GET /api/health` | `{ status, towers, stays }` |
 | `fetchDeadZonesMeta()` | `GET /dead-zones/dead_zones.json` | metadata with `bounds` |
 | `DEAD_ZONES_IMAGE_URL` | `GET /dead-zones/dead_zones.png` | constant for `<ImageOverlay url=...>` |
+
+The search panel uses higher-level functions that return ready-to-render place objects (`{ id, name, type, city, distanceKm, direction, lat, lng, website, phone, bookingUrl }`, built by `toPlace(feature)`; `distanceKm` is the distance to the nearest coverage):
+
+| Function | Used by | What it does |
+| --- | --- | --- |
+| `searchPlaces(query)` | search field | `fetchGeocode`, then stays without coverage in the found area and around it |
+| `fetchNearbyPlaces({ lat, lng })` | "Find in my area" | stays without coverage around the user's position |
+| `fetchRandomPlace()` | "Pick a random place" | one random stay without coverage |
+| `fetchPlaceDetails(id)` | details screen | `{ aiSummary, photos }` from the summary endpoint |
+
+Search starts with a 25 km radius and widens it (50, 75, 100 km) until at least 5 stays are found, because coverage is dense around big cities. Results are capped at 50, quietest first.
 
 Helpers: `bboxFromBounds(map.getBounds())` gives the `bbox` array `[minLon, minLat, maxLon, maxLat]`; `featureToLatLng(feature)` swaps GeoJSON `[lon, lat]` to Leaflet `[lat, lon]`.
 
@@ -343,6 +402,15 @@ Server side, the summary endpoint lives in `server/src/summary-routes.js` (route
 
 Quick check: `http://localhost:3000/api/health` should return `"status": "ok"`.
 
-## Data caveat
+## Data sources
 
-Coverage is based on OpenCelliD, a crowdsourced database. Where measurements are missing, the model reports no coverage, so the UI should describe it as "estimated coverage".
+Transmitters (`towers_pl.csv`, `towers_pl.json`) are built from two sources by `data-pipeline/prepare_towers.py`:
+
+| Source | What it gives | Limitations |
+| --- | --- | --- |
+| [OpenCelliD](https://opencellid.org) | Cells measured by app users, with an estimated range per cell | Only cells seen recently, so whole towns can be missing (e.g. Brodnica, Bytów) |
+| [UKE base station permits](https://bip.uke.gov.pl/pozwolenia-radiowe/wykaz-pozwolen-radiowych-tresci/stacje-gsm-umts-lte-5gnr-oraz-cdma,12,0.html) | Official list of licensed sites of Orange, T-Mobile, Play and Plus, one XLSX per band, updated monthly | A permit does not guarantee that the site is built; no ranges are published; Plus has only a few hundred entries |
+
+UKE ranges are assumed per band: 6 km for 700–900 MHz, 3 km for 1800 MHz, 2.5 km for 2100 MHz, 1.5 km for 2600 MHz and 1 km for 3600 MHz. With both sources about 1.5% of Poland comes out without coverage; with OpenCelliD alone it was 29%.
+
+The model ignores terrain, so coverage in deep mountain valleys may be overestimated and the UI should still describe it as "estimated coverage". The pipeline downloads the UKE lists into `data/uke/`; delete that folder to fetch the latest month.
