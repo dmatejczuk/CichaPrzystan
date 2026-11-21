@@ -24,6 +24,20 @@
   padding: 10px 12px;
   border: var(--border);
   border-radius: var(--radius);
+  margin: 5px;
+  transition: 0.2s;
+}
+
+.result-item:hover {
+  transform: translateY(-2px);
+  border: 1px solid var(--color-accent);
+  background-color: rgb(228, 249, 228);
+  box-shadow: 0 0 5px rgb(86, 173, 86);
+}
+
+.result-item:hover .result-item-button {
+  background-color: rgb(95, 183, 95);
+  border: none;
 }
 
 .result-item-info {
@@ -39,6 +53,7 @@
 
 .result-item-button {
   padding: 6px 10px;
+  transition: 0.2s;
 }
 
 @media (min-width: 768px) {
