@@ -271,7 +271,7 @@ async function getWikipedia(osmTags, wikidata) {
 
 
 // Główna funkcja: zbieranie informacji o obiekcie
-async function researchOsmObject(osmObject) {
+export async function researchOsmObject(osmObject) {
     if (!osmObject || typeof osmObject !== "object") {
         throw new Error("Nieprawidłowe dane OSM");
     }
@@ -477,14 +477,8 @@ async function researchOsmObject(osmObject) {
     );
 
 
-    console.log(lines, results);
-
     return {
         text: lines.join("\n"),
         data: results
     };
 }
-
-module.exports = {
-    researchOsmObject
-};

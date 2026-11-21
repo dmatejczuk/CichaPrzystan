@@ -16,6 +16,7 @@ Data is loaded into memory once at startup from the `data/` directory (`DATA_DIR
 | [`GET /api/coverage`](#get-apicoverage) | Coverage at a given point |
 | [`GET /api/stays`](#get-apistays) | Stays in an area, as GeoJSON |
 | [`GET /api/stays/:id`](#get-apistaysid) | A single stay |
+| [`GET /api/stays/:id/summary`](#get-apistaysidsummary) | Stay data plus AI summary, Wikipedia extract and photos |
 | [`GET /api/operators`](#get-apioperators) | List of mobile operators |
 | [`GET /api/health`](#get-apihealth) | Server status and loaded data |
 | [`GET /dead-zones/...`](#dead-zone-overlay) | Dead zone image and its bounds |
@@ -28,7 +29,7 @@ Errors always have the form `{ "error": "..." }`.
 | --- | --- |
 | 400 | Missing or invalid parameter, unknown operator |
 | 404 | Stay, file or path not found |
-| 503 | Data not generated (the pipeline has not been run) |
+| 503 | Data not generated (the pipeline has not been run), or the summary service is unavailable |
 | 500 | Unexpected server error |
 
 ## GET /api/coverage
@@ -148,6 +149,61 @@ The response is a single `Feature` with the same shape as an item of `features` 
 
 Errors: 404 `{ "error": "stay not found: xyz" }` when no stay has that `id`; 503 when `stays_coverage.geojson` is missing.
 
+## GET /api/stays/:id/summary
+
+Everything the details card needs after a click on a marker, in one request: the stay itself (location and coverage data from `stays_coverage.geojson`) and an AI-generated description with supporting material. The path takes the `id` from the stays list (`properties.id`).
+
+How it is built: the server takes the stay from the data above, collects public information about it (`osm-research.api.js`: OpenStreetMap data, the nearest locality from Nominatim reverse geocoding, Wikidata, Wikipedia) and sends it to Groq (`groq.api.js`, prompt in `system_prompt.txt`). It needs the `GROQ_API_KEY` environment variable. Coverage data is not sent to the AI (the prompt forbids mentioning missing internet); it is returned separately in `stay`.
+
+This is slow (several external requests, up to about a minute in the worst case), so the client timeout is 60 s. Results are cached in server memory for 1 hour per stay; failures are not cached.
+
+Example: `GET /api/stays/n26860235/summary`
+
+```json
+{
+  "id": "n26860235",
+  "stay": {
+    "type": "Feature",
+    "geometry": { "type": "Point", "coordinates": [22.61, 49.07] },
+    "properties": {
+      "id": "n26860235",
+      "name": "Niedźwiedzia Dolina",
+      "type": "chalet",
+      "website": "https://example.com",
+      "phone": null,
+      "has_coverage": false,
+      "operators": [],
+      "distance_to_coverage_m": 11826,
+      "direction": "NE",
+      "note": null
+    }
+  },
+  "summary": "Niedźwiedzia Dolina - domek w Bieszczadach\n\nPoznaj to miejsce\n...",
+  "wikipedia": {
+    "title": "Chatka Puchatka",
+    "description": "schronisko w Bieszczadach",
+    "extract": "Short article extract.",
+    "url": "https://pl.wikipedia.org/wiki/Chatka_Puchatka",
+    "image": "https://upload.wikimedia.org/..."
+  },
+  "images": [],
+  "osm_url": "https://www.openstreetmap.org/node/26860235",
+  "generated_at": "2026-11-21T01:04:01.416Z"
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | string | Same `id` as in the request |
+| `stay` | object | The stay as a GeoJSON `Feature`, identical to `GET /api/stays/:id` (coordinates are `[lon, lat]`; `properties` hold name, type, website, phone and the coverage fields) |
+| `summary` | string | Polish text written by the AI according to `system_prompt.txt`: a title, then short sections with headings (the place, what awaits guests, guests' opinions if any, practical information). Sections without data are skipped. The formatting is chosen by the model and may contain Markdown, so render it as Markdown or keep the line breaks (`white-space: pre-wrap`) |
+| `wikipedia` | object \| null | Extract of a matching Wikipedia article (from the OSM `wikipedia` tag or Wikidata); `null` when none was found. Fields `description`, `extract`, `url`, `image` may be `null` |
+| `images` | object[] | Reserved for Wikimedia Commons photos. The Commons search is currently disabled in `osm-research.api.js`, so the array is always empty; use `wikipedia.image` when present |
+| `osm_url` | string \| null | Link to the object on openstreetmap.org |
+| `generated_at` | string | ISO 8601 UTC time when the summary was generated |
+
+Errors: 404 `{ "error": "stay not found: xyz" }` when no stay has that `id`; 503 `{ "error": "summary unavailable" }` when the research or AI step fails (missing `GROQ_API_KEY` or `system_prompt.txt`, Groq error; the server log has the reason); 503 `data not loaded` when the pipeline has not been run.
+
 ## GET /api/operators
 
 Takes no parameters and returns the operators present in the data, sorted alphabetically. Use these names for the `operator` parameter of `/api/coverage`.
@@ -234,8 +290,53 @@ The API returns English codes; the Polish UI labels are defined in [`client/src/
 
 `Orange`, `Play`, `Plus`, `T-Mobile`. The data model also has an `other` category for remaining networks, but it currently contains no cells.
 
+## Frontend communication layer
+
+All requests go through [`client/src/api.js`](../client/src/api.js) (axios). Components should not call axios directly.
+
+| Function | Endpoint | Returns |
+| --- | --- | --- |
+| `fetchCoverage({ lat, lon, operator })` | `GET /api/coverage` | coverage object |
+| `fetchStays({ bbox, noCoverageOnly })` | `GET /api/stays` | GeoJSON `FeatureCollection` |
+| `fetchStay(id)` | `GET /api/stays/:id` | one `Feature` |
+| `fetchStaySummary(id)` | `GET /api/stays/:id/summary` | stay + AI summary object |
+| `fetchOperators()` | `GET /api/operators` | `string[]` |
+| `fetchHealth()` | `GET /api/health` | `{ status, towers, stays }` |
+| `fetchDeadZonesMeta()` | `GET /dead-zones/dead_zones.json` | metadata with `bounds` |
+| `DEAD_ZONES_IMAGE_URL` | `GET /dead-zones/dead_zones.png` | constant for `<ImageOverlay url=...>` |
+
+Helpers: `bboxFromBounds(map.getBounds())` gives the `bbox` array `[minLon, minLat, maxLon, maxLat]`; `featureToLatLng(feature)` swaps GeoJSON `[lon, lat]` to Leaflet `[lat, lon]`.
+
+- **Base URL:** relative by default (Vite proxies `/api` and `/dead-zones`). Set `VITE_API_URL=http://localhost:3000` to call the server directly.
+- **Cancelling:** every function accepts `signal` (an `AbortSignal`). On `moveend`, abort the previous `fetchStays` and ignore its rejection with `isCancel(err)`.
+- **Timeouts:** 10 s for every endpoint, 60 s for the summary.
+- **Errors:** every failure is thrown as `ApiError` with `status` (0 if no response), `message` (the server's `error` text) and `code`: `BAD_REQUEST` (400), `NOT_FOUND` (404), `INTERNAL_ERROR` (500), `UNAVAILABLE` (503), plus client-side `NETWORK_ERROR` and `TIMEOUT`.
+- **CORS:** the server allows the origins listed in the `CORS_ORIGINS` environment variable (comma-separated, default `http://localhost:5173,http://127.0.0.1:5173`), methods `GET, OPTIONS`, headers `Content-Type, Accept`. Set it to the real frontend URL in production.
+
+```js
+import { fetchStays, fetchStaySummary, bboxFromBounds, featureToLatLng, isCancel } from './api.js'
+
+let ctrl
+map.on('moveend', async () => {
+  ctrl?.abort()
+  ctrl = new AbortController()
+  try {
+    const { features, total } = await fetchStays({ bbox: bboxFromBounds(map.getBounds()), noCoverageOnly: true, signal: ctrl.signal })
+  } catch (err) {
+    if (!isCancel(err)) console.error(err.code, err.message)
+  }
+})
+
+// on marker click: one request gives the location data and the AI text
+const { stay, summary, images, wikipedia } = await fetchStaySummary(feature.properties.id)
+const position = featureToLatLng(stay)
+```
+
+Server side, the summary endpoint lives in `server/src/summary-routes.js` (route) and `server/src/summary.js` (combines `stays.js`, `osm-research.api.js` and `groq.api.js`); `server/src/cors.js` holds the CORS settings. They are connected in `index.js` (imports at the top, `app.use(corsMiddleware)` and the summary router).
+
 ## Running the server
 
+0. Summaries only: put your Groq key in `.env` (`GROQ_API_KEY=...`, see `.env.example`). Without it, or without `server/src/system_prompt.txt`, everything else works and the summary endpoint returns 503.
 1. Generate data (once, or after the input files change): `docker compose run --rm pipeline`
 2. Whole application: `docker compose up`; the frontend runs at `http://localhost:5173` and the API at `http://localhost:3000`
 3. Backend only, without Docker: `cd server`, `npm install`, `npm run dev`

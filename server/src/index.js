@@ -1,7 +1,9 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import express from 'express'
-import cors from 'cors'
+import { corsMiddleware } from './cors.js'
+import { createSummaryRouter } from './summary-routes.js'
+import { checkSummarySetup } from './summary.js'
 import { CoverageIndex } from './coverage.js'
 import { StayStore } from './stays.js'
 
@@ -27,6 +29,7 @@ function load(name, loader) {
 
 const coverage = load('towers_pl.json', () => CoverageIndex.fromFile(DATA_DIR))
 const stays = load('stays_coverage.geojson', () => StayStore.fromFile(DATA_DIR))
+checkSummarySetup()
 
 class HttpError extends Error {
   constructor(status, message) {
@@ -77,7 +80,7 @@ function parseOperator(raw, index) {
 }
 
 const app = express()
-app.use(cors())
+app.use(corsMiddleware)
 
 app.get('/api/health', (req, res) => {
   res.json({
@@ -111,6 +114,8 @@ app.get('/api/stays/:id', (req, res) => {
   if (!stay) throw new HttpError(404, `stay not found: ${req.params.id}`)
   res.json(stay)
 })
+
+app.use('/api/stays', createSummaryRouter(() => stays)) // GET /api/stays/:id/summary
 
 app.get('/api/operators', (req, res) => {
   res.json(requireData(coverage, 'towers_pl.json').operators)
