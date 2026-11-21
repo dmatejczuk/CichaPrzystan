@@ -4,6 +4,7 @@ import StarButton from './StarButton.jsx'
 import { fetchPlaceDetails, isCancel } from '../api.js'
 import { useLanguage } from '../language/useLanguage.js'
 import './PlaceDetails.css'
+import YourEscapeScore from './YourEscapeScore.jsx'
 
 // The AI answer may contain Markdown; headings and emphasis markers are dropped and line breaks kept.
 function toPlainText(markdown) {
@@ -49,7 +50,7 @@ export default function PlaceDetails({ place, saved, onToggleSaved, onBack }) {
           {place.distanceKm > 0 && `${t.distanceToCoverage}: ${place.distanceKm} km ${t.directions[place.direction] ?? ''}`}
         </p>
       </div>
-      
+
 
       <div className="place-details-summary">
         <h3>{t.aiSummary}</h3>
@@ -66,6 +67,16 @@ export default function PlaceDetails({ place, saved, onToggleSaved, onBack }) {
       >
         {t.goToWebsite}
       </a>
+
+
+
+      <YourEscapeScore
+        placeId={place.id}
+        distanceKm={place.distanceKm}
+        visible={!!place?.id}
+      />
+
+
     </section>
   )
 }
