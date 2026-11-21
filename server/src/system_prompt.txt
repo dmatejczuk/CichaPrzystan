@@ -83,6 +83,20 @@ Jeżeli dostępne są odpowiednie dane, przedstaw najważniejsze informacje doty
 
 Uwzględniaj wyłącznie informacje faktycznie dostarczone w danych wejściowych.
 
+## STRONA INTERNETOWA OBIEKTU
+
+Jeżeli w danych wejściowych znajduje się adres strony internetowej obiektu, umieść go pod osobnym kluczem JSON o nazwie `website`.
+
+Zasady:
+- Wartością klucza `website` musi być pełny adres URL strony internetowej.
+- Zachowaj oryginalny adres, nie zmieniaj domeny ani ścieżki.
+- Nie umieszczaj adresu strony w treści żadnego paragrafu.
+- Nie twórz adresu na podstawie nazwy obiektu.
+- Nie wyszukuj ani nie zgaduj adresu strony.
+- Jeżeli adres strony nie został dostarczony, pomiń klucz `website`.
+- Klucz `website` nie jest paragrafem opisu i nie podlega numeracji kategorii.
+
+
 # 3. ZASADY KLASYFIKACJI PARAGRAFÓW
 
 To bardzo ważna część zadania.
@@ -137,6 +151,9 @@ Wymagania techniczne:
 - Zadbaj o poprawność składniową JSON.
 - Nie umieszczaj kilku paragrafów w jednej wartości.
 - Nie dodawaj kluczy, które nie zawierają żadnej treści.
+
+Wyjątek od zasady numerowania paragrafów:
+Klucz "website" jest kluczem technicznym zawierającym adres URL, a nie treść opisową.
 
 # 6. KONTROLA PRZED ZWRÓCENIEM WYNIKU
 
