@@ -1,24 +1,48 @@
-// MOCK DATA for use only in testing in full build change to real data.
+import fs from 'node:fs'
+import path from 'node:path'
 
-const MOCK = [
-  { id: 'n1', name: 'Chatka Puchatka', type: 'alpine_hut', lat: 49.1, lon: 22.7, noCoverage: true, shortInfo: 'Mountain hut, no signal.' },
-  { id: 'n2', name: 'Pole namiotowe Dolina', type: 'camp_site', lat: 49.25, lon: 22.45, noCoverage: true, shortInfo: 'Tent camp by the river.' },
-  { id: 'n3', name: 'Pensjonat Kaskada', type: 'guest_house', lat: 49.3, lon: 22.3, noCoverage: false, shortInfo: 'Weak LTE only.' },
-]
+export const MAX_STAYS = 1000
 
-export async function loadStays(_dataDir) {}
-
-export async function findStays({ bbox, noCoverageOnly, types, limit }) {
-  const [minLon, minLat, maxLon, maxLat] = bbox
-  const all = MOCK.filter(
-    (s) =>
-      s.lon >= minLon && s.lon <= maxLon && s.lat >= minLat && s.lat <= maxLat &&
-      (!noCoverageOnly || s.noCoverage) &&
-      (!types || types.includes(s.type)),
-  )
-  return { stays: all.slice(0, limit), truncated: all.length > limit }
+// Sort by distance to coverage, descending; stays without tower data come last.
+function compareStays(a, b) {
+  const da = a.properties.distance_to_coverage_m ?? -1
+  const db = b.properties.distance_to_coverage_m ?? -1
+  return db - da
 }
 
-export async function getStay(id) {
-  return MOCK.find((s) => s.id === id) ?? null
+export class StayStore {
+  constructor(features) {
+    this.features = [...features].sort(compareStays)
+    this.byId = new Map(this.features.map((f) => [f.properties.id, f]))
+  }
+
+  static fromFile(dataDir) {
+    const geojson = JSON.parse(fs.readFileSync(path.join(dataDir, 'stays_coverage.geojson'), 'utf8'))
+    return new StayStore(geojson.features)
+  }
+
+  get size() {
+    return this.features.length
+  }
+
+  get(id) {
+    return this.byId.get(id) ?? null
+  }
+
+  // bbox: [minLon, minLat, maxLon, maxLat], or null to skip spatial filtering.
+  find({ bbox = null, noCoverageOnly = false, limit = MAX_STAYS } = {}) {
+    const matches = this.features.filter((f) => {
+      const [lon, lat] = f.geometry.coordinates
+      if (bbox && (lon < bbox[0] || lat < bbox[1] || lon > bbox[2] || lat > bbox[3])) return false
+      if (noCoverageOnly && (f.properties.has_coverage || f.properties.distance_to_coverage_m === null)) {
+        return false
+      }
+      return true
+    })
+    return {
+      type: 'FeatureCollection',
+      total: matches.length,
+      features: matches.slice(0, limit),
+    }
+  }
 }
