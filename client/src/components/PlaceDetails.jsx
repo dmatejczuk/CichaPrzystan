@@ -5,15 +5,6 @@ import { fetchPlaceDetails, isCancel } from '../api.js'
 import { useLanguage } from '../language/useLanguage.js'
 import './PlaceDetails.css'
 
-// The AI answer may contain Markdown; headings and emphasis markers are dropped and line breaks kept.
-function toPlainText(markdown) {
-  return markdown
-    .replace(/^#{1,6}\s*/gm, '')
-    .replace(/^\s*-{3,}\s*$/gm, '')
-    .replace(/\*\*(.+?)\*\*/g, '$1')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/^\s*[-*]\s+/gm, '• ')
-}
 
 export default function PlaceDetails({ place, saved, onToggleSaved, onBack }) {
   const { t, language } = useLanguage()
@@ -31,6 +22,11 @@ export default function PlaceDetails({ place, saved, onToggleSaved, onBack }) {
 
   const isCurrent = details.placeId === place.id && details.language === language
   const current = isCurrent ? details : { status: 'loading', aiSummary: '', photos: [] }
+
+  const summary = current.status === 'ready' ? parseSummary(current.aiSummary) : null
+  const sections = summary
+    ? Object.entries(summary).filter(([key]) => key !== 'website')
+    : []
 
   return (
     <section className="place-details">
@@ -52,20 +48,60 @@ export default function PlaceDetails({ place, saved, onToggleSaved, onBack }) {
       
 
       <div className="place-details-summary">
-        <h3>{t.aiSummary}</h3>
-        {current.status === 'loading' && <p>{t.summaryLoading}</p>}
-        {current.status === 'error' && <p>{t.summaryError}</p>}
-        {current.status === 'ready' && <p className="place-details-text">{toPlainText(current.aiSummary)}</p>}
-      </div>
+        {current.status === 'loading' && (
+          <div className="place-details-card">
+            <p>{t.summaryLoading}</p>
+          </div>
+        )}
 
-      <a
-        className="btn btn-primary place-details-website"
-        href={place.bookingUrl}
-        target="_blank"
-        rel="noreferrer"
-      >
-        {t.goToWebsite}
-      </a>
+        {current.status === 'error' && (
+          <div className="place-details-card">
+            <p>{t.summaryError}</p>
+          </div>
+        )}
+
+        {current.status === 'ready' && !summary && (
+          <div className="place-details-card">
+            <p>{t.summaryError}</p>
+          </div>
+        )} 
+
+        {sections.map(([key, text]) => (
+          <div key={key} className="place-details-item">
+            <h2>{key}:</h2>
+            <div className="place-details-card">
+              <p className="place-details-text">{text}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className='aiSummary'>{t.aiSummary}</p>
+      { summary && summary.website && 
+        <a
+          className="btn btn-primary place-details-website"
+          href={summary.website}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {t.goToWebsite}
+        </a>
+      }
     </section>
   )
+}
+
+export function parseSummary(raw) {
+  if (typeof raw !== 'string') return raw
+
+  const cleaned = raw
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/, '')
+    .trim()
+
+  try {
+    const parsed = JSON.parse(cleaned)
+    return typeof parsed === 'string' ? parseSummary(parsed) : parsed
+  } catch {
+    return null
+  }
 }

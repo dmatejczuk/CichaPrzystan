@@ -27,6 +27,12 @@
   font-weight: 400;
 }
 
+@font-face {
+  font-family: 'JHCRasbora';
+  src: url('./assets/fonts/JHCRasbora-RegularItalic.otf') format('truetype');
+  font-weight: 200;
+}
+
 * { box-sizing: border-box; }
 
 html, body, #root {

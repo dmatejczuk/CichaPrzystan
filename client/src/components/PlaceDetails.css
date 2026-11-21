@@ -14,6 +14,10 @@
   box-shadow: var(--box-shadow);
 }
 
+.place-details .page-header {
+  margin-top: 15px;
+}
+
 .place-details .page-header h2 {
   font-size: 1.5rem;
 }
@@ -24,13 +28,27 @@
 }
 
 .place-details-summary {
-  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.place-details-summary h3 {
+  margin: 0;
+}
+
+.place-details-item h2 {
+  margin: 12px 8px 15px;
+  font-size: 1rem;
+}
+
+.place-details-card {
   padding: var(--gap);
   border: var(--border);
   border-radius: var(--radius);
 }
 
-.place-details-summary p {
+.place-details-card p {
   margin: 0;
 }
 
@@ -64,4 +82,11 @@
 
 .place-details .star-button {
   margin-left: auto;
+}
+
+.aiSummary {
+  font-style: italic;
+  font-family: Arial, Helvetica, sans-serif;
+  text-align: right;
+  margin: 0 15px 15px 0;
 }
