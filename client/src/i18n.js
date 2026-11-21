@@ -1,6 +1,5 @@
 export const translations = {
   pl: {
-    appTitle: 'Cicha Przystań',
     searchPlaceholder: 'Gdzie chcesz pojechać?',
     search: 'Szukaj',
     findNearby: 'Znajdź w moim obszarze',
@@ -44,7 +43,6 @@ export const translations = {
   },
 
   en: {
-    appTitle: 'Cicha Przystań',
     searchPlaceholder: 'Where do you want to go?',
     search: 'Search',
     findNearby: 'Find in my area',

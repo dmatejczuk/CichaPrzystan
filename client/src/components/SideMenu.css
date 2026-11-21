@@ -29,6 +29,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 4px;
+  height: 80px;
   border-bottom: 1px solid var(--color-bg);
 }
 
@@ -53,8 +54,16 @@
   border-radius: 50%;
 }
 
+.flag-button {
+  border: 2px solid var(--color-border);
+}
+
 .flag-button-active {
-  border-color: var(--color-accent);
+  border: 3px solid var(--color-accent);
+}
+
+.flag-button-active img {
+  filter: saturate(100%) !important;
 }
 
 .flag-button img {
@@ -63,4 +72,5 @@
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
+  filter: saturate(50%);
 }

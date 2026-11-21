@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import AppHeader from './components/AppHeader.jsx'
 import MapView from './components/MapView.jsx'
 import MenuButton from './components/MenuButton.jsx'
 import SideMenu from './components/SideMenu.jsx'
@@ -72,7 +73,7 @@ export default function App() {
     <div className="app">
       <MapView places={places} selectedPlace={selectedPlace} onSelectPlace={openPlace} />
 
-      {screen !== 'details' && <MenuButton onClick={() => setMenuOpen(true)} />}
+      {screen !== 'details' && <AppHeader onMenuClick={() => setMenuOpen(true)} />}
 
       {screen === 'search' && (
         <SearchPanel

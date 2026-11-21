@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, AttributionControl, useMap } from 'react-leaflet'
 import './MapView.css'
 
 const START_CENTER = [49.25, 22.45] // Bieszczady
@@ -22,7 +22,7 @@ function MapFocus({ places, selectedPlace }) {
 export default function MapView({ places, selectedPlace, onSelectPlace }) {
   return (
     <div className="map-view">
-      <MapContainer center={START_CENTER} zoom={START_ZOOM} zoomControl={false}>
+      <MapContainer center={START_CENTER} zoom={START_ZOOM} zoomControl={false} attributionControl={false}>
         <TileLayer
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="© OpenStreetMap contributors · towers: OpenCelliD (CC-BY-SA 4.0)"
@@ -40,7 +40,8 @@ export default function MapView({ places, selectedPlace, onSelectPlace }) {
             />
           )
         })}
-
+        
+        <AttributionControl position="topright" prefix={false} />
         <MapFocus places={places} selectedPlace={selectedPlace} />
       </MapContainer>
     </div>

@@ -1,8 +1,4 @@
 .menu-button {
-  position: absolute;
-  top: var(--gap);
-  left: var(--gap);
-  z-index: 15;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -1,3 +1,4 @@
+import AppTitle from './AppTitle.jsx'
 import BackButton from './BackButton.jsx'
 import { useLanguage } from '../language/useLanguage.js'
 import { languages } from '../language/languages.js'
@@ -11,7 +12,7 @@ export default function SideMenu({ onClose, onOpenSavedPlaces }) {
       <aside className="side-menu" onClick={(event) => event.stopPropagation()}>
         <div className="page-header">
           <BackButton onClick={onClose} />
-          <h2>{t.appTitle}</h2>
+          <AppTitle />
         </div>
 
         <button className="side-menu-row side-menu-item" onClick={onOpenSavedPlaces}>

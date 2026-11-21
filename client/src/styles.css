@@ -6,7 +6,10 @@
   --color-border: #1a1a1a;
   --color-accent: #2f6f4f;
   --color-accent-text: #ffffff;
-  --color-star: #e0a800;
+  --color-star-start: #ffee00;
+  --color-star-end: #ff9900;
+  --color-star-border: #bd7a23;
+  --color-blur: #ffffff80;
 
   --radius: 14px;
   --gap: 12px;
@@ -16,11 +19,18 @@
   --panel-top: calc(var(--menu-button-size) + 2 * var(--gap));
 }
 
+@font-face {
+  font-family: 'JHCRasbora';
+  src: url('./assets/fonts/JHCRasbora-Extrabold.otf') format('truetype');
+  font-weight: 400;
+}
+
 * { box-sizing: border-box; }
 
 html, body, #root {
   height: 100%;
   margin: 0;
+  font-family: 'JHCRasbora';
 }
 
 body {
@@ -47,9 +57,10 @@ button { cursor: pointer; }
   flex-direction: column;
   gap: var(--gap);
   padding: var(--gap);
-  background: var(--color-surface);
+  background: var(--color-blur);
   border: var(--border);
   border-radius: var(--radius);
+  backdrop-filter: blur(5px);
 }
 
 .btn {
@@ -95,8 +106,16 @@ button { cursor: pointer; }
   border: none;
 }
 
-.star-button--active {
-  color: var(--color-star);
+.star-button-active {
+  color: var(--color-star-border);
+}
+
+.star-gradient-start {
+  stop-color: var(--color-star-start);
+}
+
+.star-gradient-end {
+  stop-color: var(--color-star-end);
 }
 
 @media (min-width: 768px) {
