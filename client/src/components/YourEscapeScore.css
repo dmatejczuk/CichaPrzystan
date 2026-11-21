@@ -104,3 +104,58 @@
 .escape-score-row-name {
   color: #4b534f;
 }
+
+@media (max-width: 767px) {
+  .escape-score {
+    position: static;
+    flex-shrink: 0;
+    width: auto;
+    border-radius: var(--radius);
+    box-shadow: none;
+  }
+
+  .escape-score-header {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .escape-score-title {
+    grid-column: 1 / -1;
+    margin-bottom: 8px;
+  }
+
+  .escape-score-number {
+    font-size: 38px;
+  }
+
+  .escape-score-label {
+    margin-top: 0;
+    text-align: right;
+  }
+
+  .escape-score-bar {
+    grid-column: 1 / -1;
+    margin-top: 12px;
+  }
+
+  .escape-score-note {
+    grid-column: 1 / -1;
+    margin-top: 10px;
+  }
+
+  .escape-score-details {
+    flex-direction: row;
+    gap: 16px;
+    padding: 12px 16px;
+  }
+
+  .escape-score-row {
+    flex: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+}

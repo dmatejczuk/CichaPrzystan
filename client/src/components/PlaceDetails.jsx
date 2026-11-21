@@ -47,6 +47,11 @@ export default function PlaceDetails({ place, saved, onToggleSaved, onBack }) {
         </p>
       </div>
 
+      <YourEscapeScore
+        placeId={place.id}
+        distanceKm={place.distanceKm}
+        visible={!!place?.id}
+      />
 
       <div className="place-details-summary">
         {current.status === 'loading' && (
@@ -87,12 +92,6 @@ export default function PlaceDetails({ place, saved, onToggleSaved, onBack }) {
           {t.goToWebsite}
         </a>
       }
-
-      <YourEscapeScore
-        placeId={place.id}
-        distanceKm={place.distanceKm}
-        visible={!!place?.id}
-      />
     </section>
   )
 }

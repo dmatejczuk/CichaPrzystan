@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { createPortal } from 'react-dom'
+import { useMediaQuery } from '../useMediaQuery.js'
 import './YourEscapeScore.css'
 
 function seededRandom(seed) {
@@ -21,6 +22,7 @@ function seededRandom(seed) {
 }
 
 export default function YourEscapeScore({ placeId, distanceKm = 0, visible = true }) {
+  const isDesktop = useMediaQuery('(min-width: 768px)')
   const distance = Math.max(0, Number(distanceKm) || 0)
 
   const score = useMemo(() => {
@@ -32,7 +34,7 @@ export default function YourEscapeScore({ placeId, distanceKm = 0, visible = tru
 
   if (!visible || score === null) return null
 
-  return createPortal(
+  const card = (
     <div className="escape-score" role="status" aria-label={`Your Escape Score: ${score} out of 100`}>
       <div className="escape-score-header">
         <div className="escape-score-title">YOUR ESCAPE SCORE</div>
@@ -62,7 +64,8 @@ export default function YourEscapeScore({ placeId, distanceKm = 0, visible = tru
           <strong>{distance} km</strong>
         </div>
       </div>
-    </div>,
-    document.body,
+    </div>
   )
+
+  return isDesktop ? createPortal(card, document.body) : card
 }
