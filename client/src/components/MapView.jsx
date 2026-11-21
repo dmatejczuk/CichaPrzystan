@@ -1,11 +1,13 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { MapContainer, TileLayer, CircleMarker, AttributionControl, useMap } from 'react-leaflet'
+import { getUserPosition } from '../geolocation.js'
 import './MapView.css'
 
-const START_CENTER = [49.25, 22.45] // Bieszczady
-const START_ZOOM = 10
+//jesli nie pobralo lokacji uzytkownika startujemy w Szczecinie
+const START_CENTER = [53.4285, 14.5528]
+const START_ZOOM = 12
 
-function MapFocus({ places, selectedPlace }) {
+function MapFocus({ places, selectedPlace, userPosition }) {
   const map = useMap()
 
   useEffect(() => {
@@ -13,13 +15,31 @@ function MapFocus({ places, selectedPlace }) {
       map.flyTo([selectedPlace.lat, selectedPlace.lng], 13)
     } else if (places.length > 0) {
       map.fitBounds(places.map((place) => [place.lat, place.lng]), { padding: [40, 40] })
+    } else if (userPosition) {
+      map.setView([userPosition.lat, userPosition.lng], START_ZOOM)
     }
-  }, [map, places, selectedPlace])
+  }, [map, places, selectedPlace, userPosition])
 
   return null
 }
 
 export default function MapView({ places, selectedPlace, onSelectPlace }) {
+  const [userPosition, setUserPosition] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    getUserPosition()
+      .then((position) => {
+        if (!cancelled) setUserPosition(position)
+      })
+      .catch(() => {})
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
     <div className="map-view">
       <MapContainer center={START_CENTER} zoom={START_ZOOM} zoomControl={false} attributionControl={false}>
@@ -42,7 +62,7 @@ export default function MapView({ places, selectedPlace, onSelectPlace }) {
         })}
         
         <AttributionControl position="topright" prefix={false} />
-        <MapFocus places={places} selectedPlace={selectedPlace} />
+        <MapFocus places={places} selectedPlace={selectedPlace} userPosition={userPosition} />
       </MapContainer>
     </div>
   )

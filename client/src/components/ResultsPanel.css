@@ -21,7 +21,8 @@
   display: flex;
   align-items: center;
   gap: var(--gap);
-  padding: 10px 12px;
+  padding: 0 0 0 12px;
+  background: var(--color-surface);
   border: var(--border);
   border-radius: var(--radius);
   margin: 5px;
@@ -37,6 +38,19 @@
 
 .result-item:hover .result-item-button {
   background-color: rgb(95, 183, 95);
+  border: none;
+}
+
+.result-item-main {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--gap);
+  padding: 10px 12px 10px 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
   border: none;
 }
 

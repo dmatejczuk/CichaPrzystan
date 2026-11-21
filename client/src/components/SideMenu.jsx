@@ -4,7 +4,7 @@ import { useLanguage } from '../language/useLanguage.js'
 import { languages } from '../language/languages.js'
 import './SideMenu.css'
 
-export default function SideMenu({ open, onClose, onOpenSavedPlaces }) {
+export default function SideMenu({ open, savedCount, onClose, onOpenSavedPlaces }) {
   const { t, language, setLanguage } = useLanguage()
 
   return (
@@ -20,7 +20,7 @@ export default function SideMenu({ open, onClose, onOpenSavedPlaces }) {
         </div>
 
         <button className="side-menu-row side-menu-item" onClick={onOpenSavedPlaces}>
-          {t.savedPlaces}
+          <span>{t.savedPlaces} ({savedCount})</span>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <polyline points="9 18 15 12 9 6" />

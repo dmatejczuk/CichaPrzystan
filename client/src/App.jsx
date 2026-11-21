@@ -22,6 +22,7 @@ export default function App() {
   const [popupMessage, setPopupMessage] = useState(null)
 
   const { screen, places, resultsTitle, selectedPlace } = view
+  const listedPlaces = resultsTitle === 'savedPlaces' ? savedPlaces : places
 
   useEffect(() => {
     window.history.replaceState(START_VIEW, '')
@@ -66,7 +67,7 @@ export default function App() {
 
   function openPlace(place) {
     navigate(
-      { screen: 'details', places, resultsTitle, selectedPlace: place },
+      { screen: 'details', places: listedPlaces, resultsTitle, selectedPlace: place },
       { replace: screen === 'details' },
     )
   }
@@ -95,7 +96,11 @@ export default function App() {
 
   return (
     <div className="app">
-      <MapView places={places} selectedPlace={selectedPlace} onSelectPlace={openPlace} />
+      <MapView
+        places={screen === 'details' ? places : listedPlaces}
+        selectedPlace={selectedPlace}
+        onSelectPlace={openPlace}
+      />
 
       {screen !== 'details' && <AppHeader onMenuClick={() => setMenuOpen(true)} />}
 
@@ -111,7 +116,7 @@ export default function App() {
         <ResultsPanel
           title={t[resultsTitle]}
           emptyMessage={resultsTitle === 'savedPlaces' ? t.noSavedPlaces : t.noResults}
-          places={places}
+          places={listedPlaces}
           isSaved={isSaved}
           onToggleSaved={toggleSaved}
           onBack={goBack}
@@ -130,6 +135,7 @@ export default function App() {
 
       <SideMenu
         open={menuOpen}
+        savedCount={savedPlaces.length}
         onClose={() => setMenuOpen(false)}
         onOpenSavedPlaces={showSavedPlaces}
       />
