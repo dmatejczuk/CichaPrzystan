@@ -1,5 +1,6 @@
 // All HTTP communication with the Express API. Protocol: docs/API.md
 import axios from 'axios'
+import { mockPlaces } from './data/mockPlaces.js'
 
 // Empty baseURL -> same origin, requests go through the Vite proxy (/api and /dead-zones -> server).
 // Set VITE_API_URL=http://localhost:3000 to call the server directly (CORS is enabled there).
@@ -104,3 +105,19 @@ export const fetchHealth = ({ signal } = {}) => http.get('/api/health', { signal
 
 /** GET /dead-zones/dead_zones.json -> { bounds:[[S,W],[N,E]], width, height, cell_size_m, ..., farthest_from_coverage:[...] } */
 export const fetchDeadZonesMeta = ({ signal } = {}) => http.get('/dead-zones/dead_zones.json', { signal })
+
+// ---------- search panel (mock data until the backend provides search, nearby and random) ----------
+
+export async function searchPlaces(query) {
+  const text = query.trim().toLowerCase()
+  if (!text) return mockPlaces
+  return mockPlaces.filter((place) => `${place.name} ${place.city}`.toLowerCase().includes(text))
+}
+
+export async function fetchNearbyPlaces() {
+  return mockPlaces
+}
+
+export async function fetchRandomPlace() {
+  return mockPlaces[Math.floor(Math.random() * mockPlaces.length)]
+}

@@ -1,0 +1,35 @@
+.search-form {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+}
+
+.search-form-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: var(--border);
+  border-radius: 10px;
+}
+
+.search-form-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 44px;
+  height: 44px;
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: 50%;
+}
+
+.search-actions {
+  display: flex;
+  gap: var(--gap);
+}
+
+.search-actions .btn {
+  flex: 1;
+  font-size: 0.85rem;
+}

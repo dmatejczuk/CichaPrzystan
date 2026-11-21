@@ -1,0 +1,31 @@
+.app-header {
+  position: absolute;
+  top: var(--gap);
+  left: var(--gap);
+  right: var(--gap);
+  z-index: 15;
+  display: grid;
+  grid-template-columns: var(--menu-button-size) 1fr var(--menu-button-size);
+  align-items: center;
+  pointer-events: none;
+}
+
+.app-header .menu-button {
+  pointer-events: auto;
+}
+
+.app-header .app-title {
+  height: 70px;
+}
+
+.side-menu .app-title {
+  height: 36px;
+}
+
+@media (min-width: 768px) {
+  .app-header {
+    right: auto;
+    display: flex;
+    gap: var(--gap);
+  }
+}
