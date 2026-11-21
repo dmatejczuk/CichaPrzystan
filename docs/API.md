@@ -15,8 +15,10 @@ Data is loaded into memory once at startup from the `data/` directory (`DATA_DIR
 | --- | --- |
 | [`GET /api/coverage`](#get-apicoverage) | Coverage at a given point |
 | [`GET /api/stays`](#get-apistays) | Stays in an area, as GeoJSON |
+| [`GET /api/stays/random`](#get-apistaysrandom) | A random stay |
 | [`GET /api/stays/:id`](#get-apistaysid) | A single stay |
 | [`GET /api/stays/:id/summary`](#get-apistaysidsummary) | Stay data plus AI summary, Wikipedia extract and photos |
+| [`GET /api/geocode`](#get-apigeocode) | Find a town, region or voivodeship by name |
 | [`GET /api/operators`](#get-apioperators) | List of mobile operators |
 | [`GET /api/health`](#get-apihealth) | Server status and loaded data |
 | [`GET /dead-zones/...`](#dead-zone-overlay) | Dead zone image and its bounds |
@@ -107,6 +109,8 @@ Example: `GET /api/stays?bbox=22.0,49.0,23.0,49.5&no_coverage_only=true`
         "id": "n123456",
         "name": "Niedźwiedzia Dolina",
         "type": "chalet",
+      "city": "Wetlina",
+        "city": "Wetlina",
         "website": "https://example.com",
         "phone": "+48 600 000 000",
         "has_coverage": false,
@@ -129,6 +133,7 @@ Example: `GET /api/stays?bbox=22.0,49.0,23.0,49.5&no_coverage_only=true`
 | `id` | string | OSM identifier: `n` = node, `w` = way (building or area), `r` = relation, followed by the number |
 | `name` | string \| null | Name from OSM; may be missing |
 | `type` | string | Stay type, e.g. `chalet`, `hotel` (see [Value reference](#value-reference)) |
+| `city` | string | Locality from the OSM address (`addr:city`, `addr:place`); when the stay has no address, the nearest settlement (city, town, village or hamlet) |
 | `website` | string \| null | Website |
 | `phone` | string \| null | Phone number |
 | `has_coverage` | boolean | Whether the stay has coverage |
@@ -138,6 +143,19 @@ Example: `GET /api/stays?bbox=22.0,49.0,23.0,49.5&no_coverage_only=true`
 | `note` | string \| null | `"no towers within 60 km"` when there is no data, otherwise `null` |
 
 Errors: 400 for an invalid `bbox` (not 4 numbers, or min > max) or an invalid `no_coverage_only`; 503 when `stays_coverage.geojson` is missing.
+
+## GET /api/stays/random
+
+Returns one random stay as a single `Feature` (same shape as an item of `features` in `/api/stays`). Used by the "pick a random place" button.
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `bbox` | no | Limit the draw to an area, same format as in `/api/stays` |
+| `no_coverage_only` | no | `true` / `1` draws only from stays without coverage |
+
+Example: `GET /api/stays/random?no_coverage_only=true`
+
+Errors: 400 for an invalid parameter; 404 `{ "error": "no stay matches the given filters" }`; 503 when `stays_coverage.geojson` is missing.
 
 ## GET /api/stays/:id
 
@@ -169,6 +187,7 @@ Example: `GET /api/stays/n26860235/summary`
       "id": "n26860235",
       "name": "Niedźwiedzia Dolina",
       "type": "chalet",
+      "city": "Wetlina",
       "website": "https://example.com",
       "phone": null,
       "has_coverage": false,
@@ -203,6 +222,33 @@ Example: `GET /api/stays/n26860235/summary`
 | `generated_at` | string | ISO 8601 UTC time when the summary was generated |
 
 Errors: 404 `{ "error": "stay not found: xyz" }` when no stay has that `id`; 503 `{ "error": "summary unavailable" }` when the research or AI step fails (missing `GROQ_API_KEY` or `system_prompt.txt`, Groq error; the server log has the reason); 503 `data not loaded` when the pipeline has not been run.
+
+## GET /api/geocode
+
+Finds places in Poland by name: towns, villages, regions, voivodeships. The server forwards the query to the public [Nominatim](https://nominatim.org) API (OpenStreetMap data), throttles it to one request per second as its usage policy requires and caches results in memory.
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `q` | yes | Place name, at least 2 characters, e.g. `Kraków`, `małopolskie`, `Ustrzyki Dolne` |
+
+Example: `GET /api/geocode?q=Kraków`
+
+```json
+[
+  {
+    "name": "Kraków",
+    "display_name": "Kraków, województwo małopolskie, Polska",
+    "type": "administrative",
+    "lat": 50.0469432,
+    "lon": 19.9971534,
+    "bbox": [19.7922355, 49.9676668, 20.2173455, 50.1261338]
+  }
+]
+```
+
+Up to 5 results, best match first; an empty array when nothing is found. `bbox` uses the same `[minLon, minLat, maxLon, maxLat]` order as `/api/stays`, so it can be passed on directly. `type` is the Nominatim address type, e.g. `city`, `town`, `village`, `state` (voivodeship).
+
+Errors: 400 when `q` is missing or shorter than 2 characters; 503 `{ "error": "place search unavailable" }` when Nominatim cannot be reached.
 
 ## GET /api/operators
 
@@ -299,11 +345,24 @@ All requests go through [`client/src/api.js`](../client/src/api.js) (axios). Com
 | `fetchCoverage({ lat, lon, operator })` | `GET /api/coverage` | coverage object |
 | `fetchStays({ bbox, noCoverageOnly })` | `GET /api/stays` | GeoJSON `FeatureCollection` |
 | `fetchStay(id)` | `GET /api/stays/:id` | one `Feature` |
+| `fetchRandomStay({ noCoverageOnly })` | `GET /api/stays/random` | one `Feature` |
+| `fetchGeocode(q)` | `GET /api/geocode` | list of places with `bbox` |
 | `fetchStaySummary(id)` | `GET /api/stays/:id/summary` | stay + AI summary object |
 | `fetchOperators()` | `GET /api/operators` | `string[]` |
 | `fetchHealth()` | `GET /api/health` | `{ status, towers, stays }` |
 | `fetchDeadZonesMeta()` | `GET /dead-zones/dead_zones.json` | metadata with `bounds` |
 | `DEAD_ZONES_IMAGE_URL` | `GET /dead-zones/dead_zones.png` | constant for `<ImageOverlay url=...>` |
+
+The search panel uses higher-level functions that return ready-to-render place objects (`{ id, name, type, city, distanceKm, direction, lat, lng, website, phone, bookingUrl }`, built by `toPlace(feature)`; `distanceKm` is the distance to the nearest coverage):
+
+| Function | Used by | What it does |
+| --- | --- | --- |
+| `searchPlaces(query)` | search field | `fetchGeocode`, then stays without coverage in the found area and around it |
+| `fetchNearbyPlaces({ lat, lng })` | "Find in my area" | stays without coverage around the user's position |
+| `fetchRandomPlace()` | "Pick a random place" | one random stay without coverage |
+| `fetchPlaceDetails(id)` | details screen | `{ aiSummary, photos }` from the summary endpoint |
+
+Search starts with a 25 km radius and widens it (50, 75, 100 km) until at least 5 stays are found, because coverage is dense around big cities. Results are capped at 50, quietest first.
 
 Helpers: `bboxFromBounds(map.getBounds())` gives the `bbox` array `[minLon, minLat, maxLon, maxLat]`; `featureToLatLng(feature)` swaps GeoJSON `[lon, lat]` to Leaflet `[lat, lon]`.
 

@@ -7,13 +7,15 @@ from collections import Counter
 from pathlib import Path
 
 import numpy as np
+from scipy.spatial import cKDTree
 
-from coverage import CoverageIndex
+from coverage import CoverageIndex, to_xyz
 from dead_zones import BBOX, CELL_SIZE_M, Grid, load_border_areas, rasterize_border
 
 DATA_DIR = Path(os.environ.get("DATA_DIR", Path(__file__).resolve().parent.parent / "data"))
 STAYS_FILE = DATA_DIR / "stays.geojson"
 TOWERS_FILE = DATA_DIR / "towers_pl.csv"
+PLACES_FILE = DATA_DIR / "places.geojson"
 OUTPUT_FILE = DATA_DIR / "stays_coverage.geojson"
 
 STAY_TYPES = {
@@ -39,6 +41,22 @@ class PolandMask:
         row = int(np.floor(self.grid.row(lat)))
         col = int(np.floor(self.grid.col(lon)))
         return 0 <= row < self.grid.height and 0 <= col < self.grid.width and bool(self.mask[row, col])
+
+
+class NearestPlace:
+    """Name of the nearest settlement, used when a stay has no address."""
+
+    def __init__(self, path):
+        with open(path, encoding="utf-8") as f:
+            features = [f for f in json.load(f)["features"] if f["properties"].get("name")]
+        lon = np.array([f["geometry"]["coordinates"][0] for f in features])
+        lat = np.array([f["geometry"]["coordinates"][1] for f in features])
+        self.names = [f["properties"]["name"] for f in features]
+        self.tree = cKDTree(to_xyz(lon, lat))
+
+    def name(self, lon, lat):
+        _, i = self.tree.query(to_xyz(np.array([lon]), np.array([lat]))[0])
+        return self.names[i]
 
 
 def iter_coordinates(coords):
@@ -75,6 +93,7 @@ def main():
 
     index = CoverageIndex.from_csv(TOWERS_FILE)
     poland = PolandMask()
+    nearest_place = NearestPlace(PLACES_FILE)
     seen = set()
     outside = 0
     output = []
@@ -100,6 +119,7 @@ def main():
                 "id": stay_id,
                 "name": tags.get("name"),
                 "type": stay_type,
+                "city": first_tag(tags, "addr:city", "addr:place") or nearest_place.name(lon, lat),
                 "website": first_tag(tags, "website", "contact:website", "url"),
                 "phone": first_tag(tags, "phone", "contact:phone", "contact:mobile"),
                 "has_coverage": result["has_coverage"],

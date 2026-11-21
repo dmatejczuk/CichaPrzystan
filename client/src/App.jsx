@@ -24,7 +24,14 @@ export default function App() {
   const [popupMessage, setPopupMessage] = useState(null)
 
   async function showResults(loadPlaces, title = 'results') {
-    setPlaces(await loadPlaces())
+    let loaded
+    try {
+      loaded = await loadPlaces()
+    } catch {
+      setPopupMessage(t.loadError)
+      return
+    }
+    setPlaces(loaded)
     setResultsTitle(title)
     setSelectedPlace(null)
     setScreen('results')
@@ -52,7 +59,13 @@ export default function App() {
   }
 
   async function openRandomPlace() {
-    const place = await fetchRandomPlace()
+    let place
+    try {
+      place = await fetchRandomPlace()
+    } catch {
+      setPopupMessage(t.loadError)
+      return
+    }
     setPlaces([place])
     setResultsTitle('results')
     openPlace(place)

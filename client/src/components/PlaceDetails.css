@@ -26,6 +26,15 @@
   margin: 0;
 }
 
+.place-details-text {
+  white-space: pre-wrap;
+}
+
+.place-details-coverage {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
 .place-details-booking {
   margin-top: auto;
 }

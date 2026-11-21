@@ -30,8 +30,8 @@ export class StayStore {
   }
 
   // bbox: [minLon, minLat, maxLon, maxLat], or null to skip spatial filtering.
-  find({ bbox = null, noCoverageOnly = false, limit = MAX_STAYS } = {}) {
-    const matches = this.features.filter((f) => {
+  filter({ bbox = null, noCoverageOnly = false } = {}) {
+    return this.features.filter((f) => {
       const [lon, lat] = f.geometry.coordinates
       if (bbox && (lon < bbox[0] || lat < bbox[1] || lon > bbox[2] || lat > bbox[3])) return false
       if (noCoverageOnly && (f.properties.has_coverage || f.properties.distance_to_coverage_m === null)) {
@@ -39,10 +39,19 @@ export class StayStore {
       }
       return true
     })
+  }
+
+  find({ limit = MAX_STAYS, ...criteria } = {}) {
+    const matches = this.filter(criteria)
     return {
       type: 'FeatureCollection',
       total: matches.length,
       features: matches.slice(0, limit),
     }
+  }
+
+  random(criteria = {}) {
+    const matches = this.filter(criteria)
+    return matches.length ? matches[Math.floor(Math.random() * matches.length)] : null
   }
 }

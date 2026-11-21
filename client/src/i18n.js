@@ -20,6 +20,11 @@ export const translations = {
     savePlace: 'Zapisz lokalizację',
     removeSavedPlace: 'Usuń z zapisanych',
     changeLanguage: 'Zmień język',
+    loadError: 'Nie udało się pobrać danych. Sprawdź połączenie i spróbuj ponownie.',
+    summaryLoading: 'Przygotowujemy opis tego miejsca…',
+    summaryError: 'Nie udało się przygotować opisu tego miejsca.',
+    noPhotos: 'Brak zdjęć tego miejsca.',
+    distanceToCoverage: 'Odległość do najbliższego zasięgu',
     directions: {
       N: 'na północ',
       NE: 'na północny wschód',
@@ -63,6 +68,11 @@ export const translations = {
     savePlace: 'Save location',
     removeSavedPlace: 'Remove from saved',
     changeLanguage: 'Change language',
+    loadError: 'Could not load data. Check your connection and try again.',
+    summaryLoading: 'Preparing a description of this place…',
+    summaryError: 'Could not prepare a description of this place.',
+    noPhotos: 'No photos of this place.',
+    distanceToCoverage: 'Distance to the nearest coverage',
     directions: {
       N: 'north',
       NE: 'northeast',

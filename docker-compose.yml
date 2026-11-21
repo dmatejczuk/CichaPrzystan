@@ -28,6 +28,7 @@ services:
     ports: ["5173:5173"]
     environment:
       - API_URL=http://server:3000
+      - VITE_USE_POLLING=true
     volumes:
       - ./client/src:/app/src
     depends_on: [server]
