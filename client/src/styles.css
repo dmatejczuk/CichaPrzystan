@@ -3,20 +3,22 @@
   --color-surface: #ffffff;
   --color-text: #1a1a1a;
   --color-muted: #666666;
-  --color-border: #1a1a1a;
+  --color-border: #8d8d8d;
   --color-accent: #2f6f4f;
   --color-accent-text: #ffffff;
   --color-star-start: #ffee00;
-  --color-star-end: #ff9900;
-  --color-star-border: #bd7a23;
-  --color-blur: #ffffff80;
+  --color-star-end: #ffa928;
+  --color-star-border: #b39360;
+  --color-blur: #ffffffB0;
 
+  --blur: blur(15px);
   --radius: 14px;
   --gap: 12px;
-  --border: 2px solid var(--color-border);
+  --border: 1px solid var(--color-border);
   --panel-width: 380px;
   --menu-button-size: 44px;
-  --panel-top: calc(var(--menu-button-size) + 2 * var(--gap));
+  --panel-top: calc(var(--menu-button-size) + 4 * var(--gap));
+  --box-shadow: 1px 1px 10px rgb(86, 86, 86);
 }
 
 @font-face {
@@ -58,9 +60,9 @@ button { cursor: pointer; }
   gap: var(--gap);
   padding: var(--gap);
   background: var(--color-blur);
-  border: var(--border);
+  box-shadow: var(--box-shadow);
   border-radius: var(--radius);
-  backdrop-filter: blur(5px);
+  backdrop-filter: var(--blur);
 }
 
 .btn {
@@ -104,10 +106,42 @@ button { cursor: pointer; }
   color: var(--color-muted);
   background: none;
   border: none;
+  transition: color 0.2s;
+}
+
+.star-button svg {
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.star-button:active svg {
+  transform: scale(0.75);
+  transition-duration: 0.1s;
+}
+
+.star-fill {
+  opacity: 0;
+  transform: scale(0);
+  transform-box: view-box;
+  transform-origin: 12px 12.5px;
+  transition: transform 0.2s ease-in, opacity 0.2s;
 }
 
 .star-button-active {
   color: var(--color-star-border);
+}
+
+.star-button-active .star-fill {
+  opacity: 1;
+  transform: scale(1);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .star-button,
+  .star-button svg,
+  .star-fill {
+    transition: none;
+  }
 }
 
 .star-gradient-start {

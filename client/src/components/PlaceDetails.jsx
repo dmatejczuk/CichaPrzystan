@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import BackButton from './BackButton.jsx'
-import PhotoCarousel from './PhotoCarousel.jsx'
 import StarButton from './StarButton.jsx'
 import { fetchPlaceDetails, isCancel } from '../api.js'
 import { useLanguage } from '../language/useLanguage.js'
@@ -40,11 +39,16 @@ export default function PlaceDetails({ place, saved, onToggleSaved, onBack }) {
         <StarButton active={saved} onClick={() => onToggleSaved(place)} />
       </div>
 
-      <p className="place-details-coverage">
-        {t.stayTypes[place.type]}
-        {place.city && ` · ${place.city}`}
-        {place.distanceKm > 0 && ` · ${t.distanceToCoverage}: ${place.distanceKm} km ${t.directions[place.direction] ?? ''}`}
-      </p>
+      <div className="place-details-coverage">
+        <p>
+          {t.stayTypes[place.type]}
+          {place.city && ` · ${place.city}`}
+        </p>
+        <p>
+          {place.distanceKm > 0 && `${t.distanceToCoverage}: ${place.distanceKm} km ${t.directions[place.direction] ?? ''}`}
+        </p>
+      </div>
+      
 
       <div className="place-details-summary">
         <h3>{t.aiSummary}</h3>
@@ -53,22 +57,13 @@ export default function PlaceDetails({ place, saved, onToggleSaved, onBack }) {
         {current.status === 'ready' && <p className="place-details-text">{toPlainText(current.aiSummary)}</p>}
       </div>
 
-      <div>
-        <h3>{t.photos}</h3>
-        {current.status === 'ready' && current.photos.length === 0 ? (
-          <p>{t.noPhotos}</p>
-        ) : (
-          <PhotoCarousel photos={current.photos} />
-        )}
-      </div>
-
       <a
-        className="btn btn-primary place-details-booking"
+        className="btn btn-primary place-details-website"
         href={place.bookingUrl}
         target="_blank"
         rel="noreferrer"
       >
-        {t.bookOnBooking}
+        {t.goToWebsite}
       </a>
     </section>
   )

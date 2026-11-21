@@ -4,11 +4,15 @@ import { useLanguage } from '../language/useLanguage.js'
 import { languages } from '../language/languages.js'
 import './SideMenu.css'
 
-export default function SideMenu({ onClose, onOpenSavedPlaces }) {
+export default function SideMenu({ open, onClose, onOpenSavedPlaces }) {
   const { t, language, setLanguage } = useLanguage()
 
   return (
-    <div className="side-menu-backdrop" onClick={onClose}>
+    <div
+      className={open ? 'side-menu-backdrop side-menu-backdrop-open' : 'side-menu-backdrop'}
+      onClick={onClose}
+      aria-hidden={!open}
+    >
       <aside className="side-menu" onClick={(event) => event.stopPropagation()}>
         <div className="page-header">
           <BackButton onClick={onClose} />

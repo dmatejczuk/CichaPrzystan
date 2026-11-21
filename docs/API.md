@@ -353,7 +353,7 @@ All requests go through [`client/src/api.js`](../client/src/api.js) (axios). Com
 | `fetchDeadZonesMeta()` | `GET /dead-zones/dead_zones.json` | metadata with `bounds` |
 | `DEAD_ZONES_IMAGE_URL` | `GET /dead-zones/dead_zones.png` | constant for `<ImageOverlay url=...>` |
 
-The search panel uses higher-level functions that return ready-to-render place objects (`{ id, name, type, city, distanceKm, direction, lat, lng, website, phone, bookingUrl }`, built by `toPlace(feature)`; `distanceKm` is the distance to the nearest coverage):
+The search panel uses higher-level functions that return ready-to-render place objects (`{ id, name, type, city, distanceKm, direction, lat, lng, website, phone, websiteUrl }`, built by `toPlace(feature)`; `distanceKm` is the distance to the nearest coverage):
 
 | Function | Used by | What it does |
 | --- | --- | --- |

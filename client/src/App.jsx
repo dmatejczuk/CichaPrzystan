@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import AppHeader from './components/AppHeader.jsx'
 import MapView from './components/MapView.jsx'
-import MenuButton from './components/MenuButton.jsx'
 import SideMenu from './components/SideMenu.jsx'
 import SearchPanel from './components/SearchPanel.jsx'
 import ResultsPanel from './components/ResultsPanel.jsx'
@@ -117,9 +116,11 @@ export default function App() {
         />
       )}
 
-      {menuOpen && (
-        <SideMenu onClose={() => setMenuOpen(false)} onOpenSavedPlaces={showSavedPlaces} />
-      )}
+      <SideMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        onOpenSavedPlaces={showSavedPlaces}
+      />
 
       {popupMessage && <Popup message={popupMessage} onClose={() => setPopupMessage(null)} />}
     </div>
