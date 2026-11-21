@@ -89,19 +89,20 @@ async function generate(feature,language) {
   }
 }
 
-export function getStaySummary(feature, language) {
+export function getStaySummary(feature, language = 'pl') {
   const id = feature.properties.id
-  const hit = cache.get(id)
+  const cacheKey = `${id}:${language}`
+  const hit = cache.get(cacheKey)
   if (hit && Date.now() - hit.at < CACHE_TTL_MS) return Promise.resolve(hit.value)
 
-  if (!inFlight.has(id)) {
+  if (!inFlight.has(cacheKey)) {
     const job = generate(feature, language)
       .then((value) => {
-        cache.set(id, { at: Date.now(), value })
+        cache.set(cacheKey, { at: Date.now(), value })
         return value
       })
-      .finally(() => inFlight.delete(id))
-    inFlight.set(id, job)
+      .finally(() => inFlight.delete(cacheKey))
+    inFlight.set(cacheKey, job)
   }
-  return inFlight.get(id)
+  return inFlight.get(cacheKey)
 }

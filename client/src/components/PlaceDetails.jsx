@@ -17,20 +17,21 @@ function toPlainText(markdown) {
 }
 
 export default function PlaceDetails({ place, saved, onToggleSaved, onBack }) {
-  const { t } = useLanguage()
-  const [details, setDetails] = useState({ placeId: null, status: 'loading', aiSummary: '', photos: [] })
+  const { t, language } = useLanguage()
+  const [details, setDetails] = useState({ placeId: null, language: null, status: 'loading', aiSummary: '', photos: [] })
 
   useEffect(() => {
     const controller = new AbortController()
-    fetchPlaceDetails(place.id, { signal: controller.signal })
-      .then((loaded) => setDetails({ placeId: place.id, status: 'ready', ...loaded }))
+    fetchPlaceDetails(place.id, { lang: language, signal: controller.signal })
+      .then((loaded) => setDetails({ placeId: place.id, language, status: 'ready', ...loaded }))
       .catch((err) => {
-        if (!isCancel(err)) setDetails({ placeId: place.id, status: 'error', aiSummary: '', photos: [] })
+        if (!isCancel(err)) setDetails({ placeId: place.id, language, status: 'error', aiSummary: '', photos: [] })
       })
     return () => controller.abort()
-  }, [place.id])
+  }, [place.id, language])
 
-  const current = details.placeId === place.id ? details : { status: 'loading', aiSummary: '', photos: [] }
+  const isCurrent = details.placeId === place.id && details.language === language
+  const current = isCurrent ? details : { status: 'loading', aiSummary: '', photos: [] }
 
   return (
     <section className="place-details">

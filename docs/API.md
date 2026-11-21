@@ -169,13 +169,13 @@ Errors: 404 `{ "error": "stay not found: xyz" }` when no stay has that `id`; 503
 
 ## GET /api/stays/:id/summary
 
-Everything the details card needs after a click on a marker, in one request: the stay itself (location and coverage data from `stays_coverage.geojson`) and an AI-generated description with supporting material. The path takes the `id` from the stays list (`properties.id`).
+Everything the details card needs after a click on a marker, in one request: the stay itself (location and coverage data from `stays_coverage.geojson`) and an AI-generated description with supporting material. The path takes the `id` from the stays list (`properties.id`). The optional `lang` query parameter selects the summary language: `pl` (default) or `en`. For example, `GET /api/stays/n26860235/summary?lang=en`. Other values return 400.
 
-How it is built: the server takes the stay from the data above, collects public information about it (`osm-research.api.js`: OpenStreetMap data, the nearest locality from Nominatim reverse geocoding, Wikidata, Wikipedia) and sends it to Groq (`groq.api.js`, prompt in `system_prompt.txt`). It needs the `GROQ_API_KEY` environment variable. Coverage data is not sent to the AI (the prompt forbids mentioning missing internet); it is returned separately in `stay`.
+How it is built: the server takes the stay from the data above, collects public information about it (`osm-research.api.js`: OpenStreetMap data, the nearest locality from Nominatim reverse geocoding, Wikidata, Wikipedia) and sends it to Groq (`groq.api.js`, with the language-specific `system_prompt_pl.txt` or `system_prompt_en.txt` prompt). It needs the `GROQ_API_KEY` environment variable. Coverage data is not sent to the AI (the prompt forbids mentioning missing internet); it is returned separately in `stay`.
 
-This is slow (several external requests, up to about a minute in the worst case), so the client timeout is 60 s. Results are cached in server memory for 1 hour per stay; failures are not cached.
+This is slow (several external requests, up to about a minute in the worst case), so the client timeout is 60 s. Results are cached in server memory for 1 hour per stay and language; failures are not cached.
 
-Example: `GET /api/stays/n26860235/summary`
+Example: `GET /api/stays/n26860235/summary?lang=pl`
 
 ```json
 {
@@ -215,13 +215,13 @@ Example: `GET /api/stays/n26860235/summary`
 | --- | --- | --- |
 | `id` | string | Same `id` as in the request |
 | `stay` | object | The stay as a GeoJSON `Feature`, identical to `GET /api/stays/:id` (coordinates are `[lon, lat]`; `properties` hold name, type, website, phone and the coverage fields) |
-| `summary` | string | Polish text written by the AI according to `system_prompt.txt`: a title, then short sections with headings (the place, what awaits guests, guests' opinions if any, practical information). Sections without data are skipped. The formatting is chosen by the model and may contain Markdown, so render it as Markdown or keep the line breaks (`white-space: pre-wrap`) |
+| `summary` | string | Text in the requested language (`pl` or `en`), written by the AI according to the corresponding system prompt: a title, then short sections with headings (the place, what awaits guests, guests' opinions if any, practical information). Sections without data are skipped. The formatting is chosen by the model and may contain Markdown, so render it as Markdown or keep the line breaks (`white-space: pre-wrap`) |
 | `wikipedia` | object \| null | Extract of a matching Wikipedia article (from the OSM `wikipedia` tag or Wikidata); `null` when none was found. Fields `description`, `extract`, `url`, `image` may be `null` |
 | `images` | object[] | Reserved for Wikimedia Commons photos. The Commons search is currently disabled in `osm-research.api.js`, so the array is always empty; use `wikipedia.image` when present |
 | `osm_url` | string \| null | Link to the object on openstreetmap.org |
 | `generated_at` | string | ISO 8601 UTC time when the summary was generated |
 
-Errors: 404 `{ "error": "stay not found: xyz" }` when no stay has that `id`; 503 `{ "error": "summary unavailable" }` when the research or AI step fails (missing `GROQ_API_KEY` or `system_prompt.txt`, Groq error; the server log has the reason); 503 `data not loaded` when the pipeline has not been run.
+Errors: 400 when `lang` is not `pl` or `en`; 404 `{ "error": "stay not found: xyz" }` when no stay has that `id`; 503 `{ "error": "summary unavailable" }` when the research or AI step fails (missing `GROQ_API_KEY` or a language-specific system prompt, Groq error; the server log has the reason); 503 `data not loaded` when the pipeline has not been run.
 
 ## GET /api/geocode
 
@@ -347,7 +347,7 @@ All requests go through [`client/src/api.js`](../client/src/api.js) (axios). Com
 | `fetchStay(id)` | `GET /api/stays/:id` | one `Feature` |
 | `fetchRandomStay({ noCoverageOnly })` | `GET /api/stays/random` | one `Feature` |
 | `fetchGeocode(q)` | `GET /api/geocode` | list of places with `bbox` |
-| `fetchStaySummary(id)` | `GET /api/stays/:id/summary` | stay + AI summary object |
+| `fetchStaySummary(id, { lang })` | `GET /api/stays/:id/summary?lang=...` | stay + AI summary object in the requested language (`pl` or `en`, default `pl`) |
 | `fetchOperators()` | `GET /api/operators` | `string[]` |
 | `fetchHealth()` | `GET /api/health` | `{ status, towers, stays }` |
 | `fetchDeadZonesMeta()` | `GET /dead-zones/dead_zones.json` | metadata with `bounds` |
@@ -395,7 +395,7 @@ Server side, the summary endpoint lives in `server/src/summary-routes.js` (route
 
 ## Running the server
 
-0. Summaries only: put your Groq key in `.env` (`GROQ_API_KEY=...`, see `.env.example`). Without it, or without `server/src/system_prompt.txt`, everything else works and the summary endpoint returns 503.
+0. Summaries only: put your Groq key in `.env` (`GROQ_API_KEY=...`, see `.env.example`). Without it, or without `server/src/system_prompt_pl.txt` and `server/src/system_prompt_en.txt`, everything else works and the summary endpoint returns 503.
 1. Generate data (once, or after the input files change): `docker compose run --rm pipeline`
 2. Whole application: `docker compose up`; the frontend runs at `http://localhost:5173` and the API at `http://localhost:3000`
 3. Backend only, without Docker: `cd server`, `npm install`, `npm run dev`

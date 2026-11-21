@@ -54,8 +54,8 @@ export const fetchStays = ({ bbox, noCoverageOnly = false, signal } = {}) =>
 
 export const fetchStay = (id, { signal } = {}) => http.get(`/api/stays/${encodeURIComponent(id)}`, { signal })
 
-export const fetchStaySummary = (id, { signal } = {}) =>
-  http.get(`/api/stays/${encodeURIComponent(id)}/summary`, { signal, timeout: 60_000 })
+export const fetchStaySummary = (id, { lang, signal } = {}) =>
+  http.get(`/api/stays/${encodeURIComponent(id)}/summary`, { params: lang ? { lang } : undefined, signal, timeout: 60_000 })
 
 export const fetchOperators = ({ signal } = {}) => http.get('/api/operators', { signal })
 
@@ -131,8 +131,8 @@ export async function fetchRandomPlace() {
   return toPlace(await fetchRandomStay({ noCoverageOnly: true }))
 }
 
-export async function fetchPlaceDetails(id, { signal } = {}) {
-  const { summary, wikipedia, images } = await fetchStaySummary(id, { signal })
+export async function fetchPlaceDetails(id, { lang, signal } = {}) {
+  const { summary, wikipedia, images } = await fetchStaySummary(id, { lang, signal })
   const photos = [wikipedia?.image, ...images.map((image) => image.image)].filter(Boolean)
   return { aiSummary: summary, photos }
 }
