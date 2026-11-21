@@ -4,6 +4,7 @@ import StarButton from './StarButton.jsx'
 import { fetchPlaceDetails, isCancel } from '../api.js'
 import { useLanguage } from '../language/useLanguage.js'
 import './PlaceDetails.css'
+import YourEscapeScore from './YourEscapeScore.jsx'
 
 
 export default function PlaceDetails({ place, saved, onToggleSaved, onBack }) {
@@ -86,6 +87,12 @@ export default function PlaceDetails({ place, saved, onToggleSaved, onBack }) {
           {t.goToWebsite}
         </a>
       }
+
+      <YourEscapeScore
+        placeId={place.id}
+        distanceKm={place.distanceKm}
+        visible={!!place?.id}
+      />
     </section>
   )
 }
