@@ -8,17 +8,20 @@ export const error_message =
   "Przepraszamy, podczas generowania podsumowania AI wystąpił błąd";
 
 
-const SystemPrompt = fs.readFileSync(
-    new URL("./system_prompt.txt", import.meta.url),
+
+export async function summarise(inputData, language="pl") {
+  try {
+
+    let SystemPrompt = fs.readFileSync(
+    new URL("./system_prompt_" + (language) +".txt", import.meta.url),
     "utf8"
 );
 
-export async function summarise(inputData) {
-  try {
+
     const messages = [
       {
         role: "system",
-        content: SystemPrompt
+        content: SystemPrompt 
       },
       {
         role: "user",

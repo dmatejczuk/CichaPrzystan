@@ -57,7 +57,7 @@ function toOsmObject(feature) {
   }
 }
 
-async function generate(feature) {
+async function generate(feature,language) {
   const { summarise, errorText, researchOsmObject } = await loadAi()
   if (!process.env.GROQ_API_KEY) throw new SummaryUnavailable('GROQ_API_KEY is not set')
   const p = feature.properties
@@ -70,7 +70,7 @@ async function generate(feature) {
     throw new SummaryUnavailable(err.message)
   }
 
-  const text = await summarise(research.text)
+  const text = await summarise(research.text, language)
   if (text === errorText) throw new SummaryUnavailable('AI generation failed')
 
   const { wikipedia, commons, osm } = research.data
@@ -89,13 +89,13 @@ async function generate(feature) {
   }
 }
 
-export function getStaySummary(feature) {
+export function getStaySummary(feature, language) {
   const id = feature.properties.id
   const hit = cache.get(id)
   if (hit && Date.now() - hit.at < CACHE_TTL_MS) return Promise.resolve(hit.value)
 
   if (!inFlight.has(id)) {
-    const job = generate(feature)
+    const job = generate(feature, language)
       .then((value) => {
         cache.set(id, { at: Date.now(), value })
         return value

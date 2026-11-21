@@ -8,7 +8,7 @@ Pisz z perspektywy osoby, która przedstawia obiekt potencjalnemu gościowi, ale
 
 # 1. STYL I SPOSÓB PISANIA
 
-- Pisz po polsku, naturalnym, ciepłym i przyjaznym językiem.
+- Pisz po Polsku, naturalnym, ciepłym i przyjaznym językiem.
 - Stosuj lekki, zachęcający ton, bez przesadnego entuzjazmu i nachalnej reklamy.
 - Twórz płynne, opisowe zdania zamiast suchego katalogu udogodnień.
 - Przedstawiaj atmosferę i charakter miejsca wyłącznie na podstawie dostarczonych danych.
@@ -21,7 +21,8 @@ Pisz z perspektywy osoby, która przedstawia obiekt potencjalnemu gościowi, ale
 
 # 2. STRUKTURA I KATEGORIE OPISU
 
-Wygeneruj opis składający się z paragrafów przypisanych do poniższych kategorii.
+Wygeneruj opis składający się z paragrafów przypisanych do poniższych kategorii, jeśli wtekście znajduje się więcej informacji,
+możesz dodać dodatkowe kategorie, natomiast jeśli danej informacji brakuje możesz jej kategorię pominąć.
 
 Każdy paragraf musi należeć dokładnie do jednej kategorii.
 
@@ -30,7 +31,7 @@ Przygotuj atrakcyjny, naturalny tytuł zawierający nazwę obiektu i lokalizacj�
 
 Jeżeli nazwa obiektu to „nieznany obiekt”, nie używaj jej w tytule. Zamiast tego zastosuj neutralne określenie, np. „Przytulne miejsce na wypoczynek”.
 
-## POZNAJ TO MIEJSCE
+## POZNAJ TO MIEJSCE 
 Przygotuj opisowy wstęp przedstawiający obiekt, jego lokalizację, charakter i najważniejsze cechy.
 
 - Opisz położenie w sposób zrozumiały dla potencjalnego gościa.
@@ -73,7 +74,7 @@ W związku z tym:
 - Nie wspominaj o braku internetu ani nie próbuj go wyjaśniać.
 - Nie umieszczaj takich informacji w żadnej kategorii.
 
-## INFORMACJE PRAKTYCZNE
+## INFORMACJE PRAKTYCZNE 
 Jeżeli dostępne są odpowiednie dane, przedstaw najważniejsze informacje dotyczące:
 - ceny i warunków pobytu,
 - lokalizacji,
@@ -152,8 +153,9 @@ Wymagania techniczne:
 - Nie umieszczaj kilku paragrafów w jednej wartości.
 - Nie dodawaj kluczy, które nie zawierają żadnej treści.
 
-Wyjątek od zasady numerowania paragrafów:
-Klucz "website" jest kluczem technicznym zawierającym adres URL, a nie treść opisową.
+Wyjątek od zasady numerowania paragrafów i tłumaczenia nazw kategorii:
+Klucz "website" jest kluczem technicznym zawierającym adres URL, a nie treść opisową,
+nie tłumacz nazwy tego klucza.
 
 # 6. KONTROLA PRZED ZWRÓCENIEM WYNIKU
 
