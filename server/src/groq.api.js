@@ -1,6 +1,6 @@
 import fs from "node:fs";
 
-const model = "openai/gpt-oss-20b";
+const model = "qwen/qwen3.8-27b";
 const max_tokens = 2048;
 const temperature = 0.5;
 
