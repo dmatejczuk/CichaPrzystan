@@ -39,7 +39,7 @@ export async function checkSummarySetup() {
 }
 
 function toOsmObject(feature) {
-  const { id, name, type, website, phone } = feature.properties
+  const { id, name, type, city, website, phone } = feature.properties
   const m = /^([nwr])(\d+)$/.exec(id)
   const [lon, lat] = feature.geometry.coordinates
   return {
@@ -47,7 +47,13 @@ function toOsmObject(feature) {
     type: m ? OSM_TYPES[m[1]] : null,
     lat,
     lon,
-    tags: { name: name ?? undefined, tourism: type, website: website ?? undefined, phone: phone ?? undefined },
+    tags: {
+      name: name ?? undefined,
+      tourism: type,
+      'addr:city': city ?? undefined,
+      website: website ?? undefined,
+      phone: phone ?? undefined,
+    },
   }
 }
 

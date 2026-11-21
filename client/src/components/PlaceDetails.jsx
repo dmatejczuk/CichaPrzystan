@@ -10,7 +10,9 @@ import './PlaceDetails.css'
 function toPlainText(markdown) {
   return markdown
     .replace(/^#{1,6}\s*/gm, '')
+    .replace(/^\s*-{3,}\s*$/gm, '')
     .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     .replace(/^\s*[-*]\s+/gm, '• ')
 }
 
