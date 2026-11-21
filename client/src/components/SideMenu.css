@@ -3,6 +3,14 @@
   inset: 0;
   z-index: 50;
   background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s;
+}
+
+.side-menu-backdrop-open {
+  opacity: 1;
+  visibility: visible;
 }
 
 .side-menu {
@@ -17,7 +25,12 @@
   padding: var(--gap);
   background: var(--color-surface);
   border-right: var(--border);
-  animation: side-menu-in 0.2s ease-out;
+  transform: translateX(-100%);
+  transition: transform 0.2s ease;
+}
+
+.side-menu-backdrop-open .side-menu {
+  transform: translateX(0);
 }
 
 @keyframes side-menu-in {

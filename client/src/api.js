@@ -82,7 +82,7 @@ function bboxAround(lat, lon, km) {
 
 const unionBbox = (a, b) => [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])]
 
-function bookingUrl({ name, city }) {
+function websiteUrl({ name, city }) {
   const query = [name, city].filter(Boolean).join(' ')
   return `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(query)}`
 }
@@ -102,7 +102,7 @@ export function toPlace(feature) {
     lng: lon,
     website: p.website,
     phone: p.phone,
-    bookingUrl: bookingUrl(p),
+    websiteUrl: websiteUrl(p),
   }
 }
 

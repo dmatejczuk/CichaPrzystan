@@ -15,7 +15,9 @@
 }
 
 .app-header .app-title {
-  height: 70px;
+  height: 50px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .side-menu .app-title {
@@ -27,5 +29,9 @@
     right: auto;
     display: flex;
     gap: var(--gap);
+  }
+
+  .app-header .app-title {
+    height: 60px;
   }
 }

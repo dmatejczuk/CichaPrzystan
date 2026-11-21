@@ -6,8 +6,16 @@
   flex-direction: column;
   gap: var(--gap);
   padding: var(--gap);
-  background: var(--color-surface);
+  background: var(--color-blur);
+  backdrop-filter: var(--blur);
   overflow-y: auto;
+  margin: 10px;
+  border-radius: var(--radius);
+  box-shadow: var(--box-shadow);
+}
+
+.place-details .page-header h2 {
+  font-size: 1.5rem;
 }
 
 .place-details h3 {
@@ -35,35 +43,15 @@
   font-size: 0.9rem;
 }
 
-.place-details-booking {
+.place-details-website {
   margin-top: auto;
+  transition: 0.2s;
 }
 
-.photo-carousel {
-  display: flex;
-  align-items: center;
-  gap: var(--gap);
-}
-
-.photo-carousel-slot {
-  flex: 1;
-  max-width: 100px;
-  aspect-ratio: 1;
-  border: var(--border);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.photo-carousel-slot img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.photo-carousel-next {
-  font-size: 1.5rem;
-  background: none;
-  border: none;
+.place-details-website:hover {
+  cursor: pointer;
+  filter: saturate(200%);
+  box-shadow: 0 0 5px green;
 }
 
 @media (min-width: 768px) {
