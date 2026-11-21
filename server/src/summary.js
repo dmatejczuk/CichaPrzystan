@@ -1,9 +1,4 @@
-// Builds the response of GET /api/stays/:id/summary (docs/API.md):
-
-import fs from 'node:fs'
-import path from 'node:path'
-import Module from 'node:module'
-import { fileURLToPath } from 'node:url'
+// Builds the response of GET /api/stays/:id/summary (docs/API.md).
 
 const CACHE_TTL_MS = 60 * 60 * 1000
 const cache = new Map()
@@ -15,27 +10,13 @@ const OSM_TYPES = { n: 'node', w: 'way', r: 'relation' }
 
 export class SummaryUnavailable extends Error {}
 
-async function loadSibling(file) {
-  const filename = fileURLToPath(new URL(file, import.meta.url))
-  try {
-    const ns = await import(new URL(file, import.meta.url).href)
-    return { ...(typeof ns.default === 'object' ? ns.default : {}), ...ns }
-  } catch (err) {
-    if (!(err instanceof ReferenceError)) throw err
-    const m = new Module(filename, null)
-    m.filename = filename
-    m.paths = Module._nodeModulePaths(path.dirname(filename))
-    m._compile(fs.readFileSync(filename, 'utf8'), filename)
-    return m.exports
-  }
-}
-
 let ai = null
 async function loadAi() {
   if (ai) return ai
   try {
-    const groq = await loadSibling('./groq.api.js')
-    const research = await loadSibling('./osm-research.api.js')
+    // Loaded lazily so that a missing prompt file only disables summaries, not the whole server.
+    const groq = await import('./groq.api.js')
+    const research = await import('./osm-research.api.js')
     ai = {
       summarise: groq.summarise,
       errorText: groq.error_message ?? AI_ERROR_TEXT,
@@ -72,6 +53,7 @@ function toOsmObject(feature) {
 
 async function generate(feature) {
   const { summarise, errorText, researchOsmObject } = await loadAi()
+  if (!process.env.GROQ_API_KEY) throw new SummaryUnavailable('GROQ_API_KEY is not set')
   const p = feature.properties
 
   let research

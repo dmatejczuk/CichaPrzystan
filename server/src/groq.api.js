@@ -1,20 +1,19 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "node:fs";
 
 const model = "openai/gpt-oss-20b";
 const max_tokens = 2048;
 const temperature = 0.5;
 
-const error_message =
+export const error_message =
   "Przepraszamy, podczas generowania podsumowania AI wystąpił błąd";
 
 
 const SystemPrompt = fs.readFileSync(
-    path.join(__dirname, "system_prompt.txt"),
+    new URL("./system_prompt.txt", import.meta.url),
     "utf8"
 );
 
-async function summarise(inputData) {
+export async function summarise(inputData) {
   try {
     const messages = [
       {
@@ -27,7 +26,6 @@ async function summarise(inputData) {
       }
     ];
 
-    console.log(messages);
 
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
@@ -51,9 +49,6 @@ async function summarise(inputData) {
     if (!response.ok) {
       console.error("Groq API Error:", result);
 
-      var api = process.env.GROQ_API_KEY;
-      console.log(api);
-
       return error_message;
     }
 
@@ -71,6 +66,3 @@ async function summarise(inputData) {
     return error_message;
   }
 }
-
-
-module.exports = { summarise };

@@ -153,7 +153,7 @@ Errors: 404 `{ "error": "stay not found: xyz" }` when no stay has that `id`; 503
 
 Everything the details card needs after a click on a marker, in one request: the stay itself (location and coverage data from `stays_coverage.geojson`) and an AI-generated description with supporting material. The path takes the `id` from the stays list (`properties.id`).
 
-How it is built: the server takes the stay from the data above, collects public information about it (`osm-research.api.js`: OpenStreetMap data, Wikidata, Wikipedia, Wikimedia Commons) and sends it to Groq (`groq.api.js`, prompt in `system_prompt.txt`). It needs the `GROQ_API_KEY` environment variable. Coverage data is not sent to the AI (the prompt forbids mentioning missing internet); it is returned separately in `stay`.
+How it is built: the server takes the stay from the data above, collects public information about it (`osm-research.api.js`: OpenStreetMap data, the nearest locality from Nominatim reverse geocoding, Wikidata, Wikipedia) and sends it to Groq (`groq.api.js`, prompt in `system_prompt.txt`). It needs the `GROQ_API_KEY` environment variable. Coverage data is not sent to the AI (the prompt forbids mentioning missing internet); it is returned separately in `stay`.
 
 This is slow (several external requests, up to about a minute in the worst case), so the client timeout is 60 s. Results are cached in server memory for 1 hour per stay; failures are not cached.
 
@@ -186,16 +186,7 @@ Example: `GET /api/stays/n26860235/summary`
     "url": "https://pl.wikipedia.org/wiki/Chatka_Puchatka",
     "image": "https://upload.wikimedia.org/..."
   },
-  "images": [
-    {
-      "title": "File:Chatka Puchatka.jpg",
-      "image": "https://upload.wikimedia.org/...",
-      "page": "https://commons.wikimedia.org/wiki/File:Chatka_Puchatka.jpg",
-      "author": "Jan Kowalski",
-      "license": "CC BY-SA 4.0",
-      "license_url": "https://creativecommons.org/licenses/by-sa/4.0"
-    }
-  ],
+  "images": [],
   "osm_url": "https://www.openstreetmap.org/node/26860235",
   "generated_at": "2026-11-21T01:04:01.416Z"
 }
@@ -207,7 +198,7 @@ Example: `GET /api/stays/n26860235/summary`
 | `stay` | object | The stay as a GeoJSON `Feature`, identical to `GET /api/stays/:id` (coordinates are `[lon, lat]`; `properties` hold name, type, website, phone and the coverage fields) |
 | `summary` | string | Polish text written by the AI according to `system_prompt.txt`: a title, then short sections with headings (the place, what awaits guests, guests' opinions if any, practical information). Sections without data are skipped. The formatting is chosen by the model and may contain Markdown, so render it as Markdown or keep the line breaks (`white-space: pre-wrap`) |
 | `wikipedia` | object \| null | Extract of a matching Wikipedia article (from the OSM `wikipedia` tag or Wikidata); `null` when none was found. Fields `description`, `extract`, `url`, `image` may be `null` |
-| `images` | object[] | Wikimedia Commons photos found by the stay's name; empty when the stay has no name or nothing was found. Photos may not show this exact place, and `author` / `license` should be displayed with them |
+| `images` | object[] | Reserved for Wikimedia Commons photos. The Commons search is currently disabled in `osm-research.api.js`, so the array is always empty; use `wikipedia.image` when present |
 | `osm_url` | string \| null | Link to the object on openstreetmap.org |
 | `generated_at` | string | ISO 8601 UTC time when the summary was generated |
 
