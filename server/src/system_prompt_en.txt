@@ -126,7 +126,7 @@ Example key naming:
 - NEGATIVE REVIEWS
 - PRACTICAL INFORMATION
 
-Numbering must be continuous within each category.
+If keys exist, they should be in foregoing order. Do not use other names than keys mention above.
 
 # 4. ACCURACY AND RELIABILITY RULES
 

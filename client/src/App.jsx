@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AppHeader from './components/AppHeader.jsx'
 import MapView from './components/MapView.jsx'
 import SideMenu from './components/SideMenu.jsx'
@@ -11,16 +11,42 @@ import { getUserPosition } from './geolocation.js'
 import { useLanguage } from './language/useLanguage.js'
 import { useSavedPlaces } from './useSavedPlaces.js'
 
+const START_VIEW = { screen: 'search', places: [], resultsTitle: 'results', selectedPlace: null }
+
 export default function App() {
   const { t } = useLanguage()
   const { savedPlaces, isSaved, toggleSaved } = useSavedPlaces()
 
-  const [screen, setScreen] = useState('search')
-  const [places, setPlaces] = useState([])
-  const [resultsTitle, setResultsTitle] = useState('results')
-  const [selectedPlace, setSelectedPlace] = useState(null)
+  const [view, setView] = useState(START_VIEW)
   const [menuOpen, setMenuOpen] = useState(false)
   const [popupMessage, setPopupMessage] = useState(null)
+
+  const { screen, places, resultsTitle, selectedPlace } = view
+
+  useEffect(() => {
+    window.history.replaceState(START_VIEW, '')
+
+    function handlePopState(event) {
+      setView(event.state ?? START_VIEW)
+      setMenuOpen(false)
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  function navigate(nextView, { replace = false } = {}) {
+    if (replace) {
+      window.history.replaceState(nextView, '')
+    } else {
+      window.history.pushState(nextView, '')
+    }
+    setView(nextView)
+  }
+
+  function goBack() {
+    window.history.back()
+  }
 
   async function showResults(loadPlaces, title = 'results') {
     let loaded
@@ -30,10 +56,7 @@ export default function App() {
       setPopupMessage(t.loadError)
       return
     }
-    setPlaces(loaded)
-    setResultsTitle(title)
-    setSelectedPlace(null)
-    setScreen('results')
+    navigate({ screen: 'results', places: loaded, resultsTitle: title, selectedPlace: null })
   }
 
   function showSavedPlaces() {
@@ -42,8 +65,10 @@ export default function App() {
   }
 
   function openPlace(place) {
-    setSelectedPlace(place)
-    setScreen('details')
+    navigate(
+      { screen: 'details', places, resultsTitle, selectedPlace: place },
+      { replace: screen === 'details' },
+    )
   }
 
   async function findNearby() {
@@ -65,20 +90,7 @@ export default function App() {
       setPopupMessage(t.loadError)
       return
     }
-    setPlaces([place])
-    setResultsTitle('results')
-    openPlace(place)
-  }
-
-  function closeSearch() {
-    setPlaces([])
-    setSelectedPlace(null)
-    setScreen('search')
-  }
-
-  function closeDetails() {
-    setSelectedPlace(null)
-    setScreen('results')
+    navigate({ screen: 'details', places: [place], resultsTitle: 'results', selectedPlace: place })
   }
 
   return (
@@ -102,7 +114,7 @@ export default function App() {
           places={places}
           isSaved={isSaved}
           onToggleSaved={toggleSaved}
-          onBack={closeSearch}
+          onBack={goBack}
           onSelectPlace={openPlace}
         />
       )}
@@ -112,7 +124,7 @@ export default function App() {
           place={selectedPlace}
           saved={isSaved(selectedPlace)}
           onToggleSaved={toggleSaved}
-          onBack={closeDetails}
+          onBack={goBack}
         />
       )}
 

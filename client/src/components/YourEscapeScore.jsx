@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useMediaQuery } from '../useMediaQuery.js'
+import { useLanguage } from '../language/useLanguage.js'
 import './YourEscapeScore.css'
 
 function seededRandom(seed) {
@@ -22,6 +23,7 @@ function seededRandom(seed) {
 }
 
 export default function YourEscapeScore({ placeId, distanceKm = 0, visible = true }) {
+  const { t } = useLanguage()
   const isDesktop = useMediaQuery('(min-width: 768px)')
   const distance = Math.max(0, Number(distanceKm) || 0)
 
@@ -35,32 +37,32 @@ export default function YourEscapeScore({ placeId, distanceKm = 0, visible = tru
   if (!visible || score === null) return null
 
   const card = (
-    <div className="escape-score" role="status" aria-label={`Your Escape Score: ${score} out of 100`}>
+    <div className="escape-score" role="status" aria-label={t.escapeScoreAria.replace('{score}', score)}>
       <div className="escape-score-header">
-        <div className="escape-score-title">YOUR ESCAPE SCORE</div>
+        <div className="escape-score-title">{t.escapeScoreTitle}</div>
 
         <div className="escape-score-value">
           <span className="escape-score-number">{score}</span>
           <span className="escape-score-max">/100</span>
         </div>
 
-        <div className="escape-score-label">Poza cywilizacją</div>
+        <div className="escape-score-label">{t.escapeScoreVerdict}</div>
 
         <div className="escape-score-bar">
           <div className="escape-score-bar-fill" style={{ width: `${score}%` }} />
         </div>
 
-        <p className="escape-score-note">Idealne miejsce na cyfrowy detoks.</p>
+        <p className="escape-score-note">{t.escapeScoreNote}</p>
       </div>
 
       <div className="escape-score-details">
         <div className="escape-score-row">
-          <span className="escape-score-row-name">Dostępność sieci</span>
-          <strong>Minimalna</strong>
+          <span className="escape-score-row-name">{t.escapeScoreNetwork}</span>
+          <strong>{t.escapeScoreNetworkMinimal}</strong>
         </div>
 
         <div className="escape-score-row">
-          <span className="escape-score-row-name">Odległość od zasięgu</span>
+          <span className="escape-score-row-name">{t.escapeScoreDistance}</span>
           <strong>{distance} km</strong>
         </div>
       </div>

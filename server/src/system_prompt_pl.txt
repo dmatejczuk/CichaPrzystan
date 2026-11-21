@@ -128,7 +128,7 @@ Przykładowe nazewnictwo kluczy:
 - OPINIE NEGATYWNE
 - INFORMACJE PRAKTYCZNE
 
-Numeracja powinna być ciągła w ramach danej kategorii.
+Jeśli klucze istnieją, powinny być w powyższej kolejności. Nie używaj innych nazw kluczy niż wymienione powyżej.
 
 # 4. ZASADY DOKŁADNOŚCI I WIARYGODNOŚCI
 
