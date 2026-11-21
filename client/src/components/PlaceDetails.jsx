@@ -45,7 +45,7 @@ export default function PlaceDetails({ place, saved, onToggleSaved, onBack }) {
           {place.distanceKm > 0 && `${t.distanceToCoverage}: ${place.distanceKm} km ${t.directions[place.direction] ?? ''}`}
         </p>
       </div>
-      
+
 
       <div className="place-details-summary">
         {current.status === 'loading' && (

@@ -21,17 +21,16 @@ Pisz z perspektywy osoby, która przedstawia obiekt potencjalnemu gościowi, ale
 
 # 2. STRUKTURA I KATEGORIE OPISU
 
-Wygeneruj opis składający się z paragrafów przypisanych do poniższych kategorii, jeśli wtekście znajduje się więcej informacji,
-możesz dodać dodatkowe kategorie, natomiast jeśli danej informacji brakuje możesz jej kategorię pominąć.
+Wygeneruj opis składający się z paragrafów przypisanych do poniższych kategorii. Jeśli w tekście znajduje się więcej informacji, możesz dodać dodatkowe kategorie, natomiast jeśli danej informacji brakuje, możesz jej kategorię pominąć.
 
 Każdy paragraf musi należeć dokładnie do jednej kategorii.
 
-## TYTUŁ
-Przygotuj atrakcyjny, naturalny tytuł zawierający nazwę obiektu i lokalizację, jeśli są dostępne.
+**WAŻNE: Nie generuj tytułu, nagłówka ani osobnej nazwy obiektu. Nie dodawaj klucza `TYTUŁ` do obiektu JSON. Rozpocznij bezpośrednio od pierwszej kategorii opisowej.**
 
-Jeżeli nazwa obiektu to „nieznany obiekt”, nie używaj jej w tytule. Zamiast tego zastosuj neutralne określenie, np. „Przytulne miejsce na wypoczynek”.
+Jeżeli nazwa obiektu to „nieznany obiekt”, nie używaj jej w żadnym miejscu opisu.
 
-## POZNAJ TO MIEJSCE 
+## POZNAJ TO MIEJSCE
+
 Przygotuj opisowy wstęp przedstawiający obiekt, jego lokalizację, charakter i najważniejsze cechy.
 
 - Opisz położenie w sposób zrozumiały dla potencjalnego gościa.
@@ -41,6 +40,7 @@ Przygotuj opisowy wstęp przedstawiający obiekt, jego lokalizację, charakter i
 - Zbuduj spójny obraz miejsca i możliwości wypoczynku.
 
 ## CO CZEKA NA GOŚCI
+
 Przedstaw najważniejsze udogodnienia, wyposażenie i dostępne przestrzenie.
 
 - Wybieraj informacje najbardziej istotne z perspektywy gościa.
@@ -50,6 +50,7 @@ Przedstaw najważniejsze udogodnienia, wyposażenie i dostępne przestrzenie.
 - Nie dopisuj standardowych udogodnień, których nie ma w danych.
 
 ## OPINIE GOŚCI – CO GOŚCIE DOCENIAJĄ
+
 Jeśli dostępne są opinie, przedstaw najważniejsze pozytywne doświadczenia gości.
 
 - Łącz powtarzające się spostrzeżenia.
@@ -58,6 +59,7 @@ Jeśli dostępne są opinie, przedstaw najważniejsze pozytywne doświadczenia g
 - Nie przypisuj gościom doświadczeń, których nie opisali.
 
 ## OPINIE GOŚCI – CO WARTO WIEDZIEĆ
+
 Jeśli dostępne są opinie zawierające istotne niedogodności, przedstaw je w sposób rzeczowy i wyważony.
 
 - Nie wyolbrzymiaj pojedynczych negatywnych uwag.
@@ -66,16 +68,20 @@ Jeśli dostępne są opinie zawierające istotne niedogodności, przedstaw je w 
 - Nie przedstawiaj subiektywnych preferencji jako obiektywnych wad obiektu.
 
 WAŻNE WYKLUCZENIE:
+
 Wszystkie opisywane obiekty znajdują się poza zasięgiem internetu.
 
 W związku z tym:
+
 - Całkowicie ignoruj negatywne opinie dotyczące braku internetu, Wi-Fi, zasięgu sieci komórkowej i dostępu do sieci.
 - Nie traktuj braku dostępu do internetu jako wady obiektu.
 - Nie wspominaj o braku internetu ani nie próbuj go wyjaśniać.
 - Nie umieszczaj takich informacji w żadnej kategorii.
 
-## INFORMACJE PRAKTYCZNE 
+## INFORMACJE PRAKTYCZNE
+
 Jeżeli dostępne są odpowiednie dane, przedstaw najważniejsze informacje dotyczące:
+
 - ceny i warunków pobytu,
 - lokalizacji,
 - dostępności parkingu,
@@ -89,6 +95,7 @@ Uwzględniaj wyłącznie informacje faktycznie dostarczone w danych wejściowych
 Jeżeli w danych wejściowych znajduje się adres strony internetowej obiektu, umieść go pod osobnym kluczem JSON o nazwie `website`.
 
 Zasady:
+
 - Wartością klucza `website` musi być pełny adres URL strony internetowej.
 - Zachowaj oryginalny adres, nie zmieniaj domeny ani ścieżki.
 - Nie umieszczaj adresu strony w treści żadnego paragrafu.
@@ -96,7 +103,6 @@ Zasady:
 - Nie wyszukuj ani nie zgaduj adresu strony.
 - Jeżeli adres strony nie został dostarczony, pomiń klucz `website`.
 - Klucz `website` nie jest paragrafem opisu i nie podlega numeracji kategorii.
-
 
 # 3. ZASADY KLASYFIKACJI PARAGRAFÓW
 
@@ -109,16 +115,18 @@ To bardzo ważna część zadania.
 - Nie twórz pustych kategorii.
 - Pomijaj kategorie, dla których brakuje odpowiednich informacji.
 - Nie twórz dodatkowych paragrafów tylko po to, aby wypełnić strukturę.
-- Tytuł również musi być osobną kategorią.
+- Nie generuj tytułu, nagłówka ani nazwy obiektu jako osobnego elementu.
+- Nigdy nie dodawaj klucza `TYTUŁ` do wyniku JSON.
+- Rozpocznij bezpośrednio od pierwszej kategorii opisowej.
 
 Przykładowe nazewnictwo kluczy:
-- TYTUŁ
-- POZNAJ_TO_MIEJSCE_1
-- CO_CZEKA_NA_GOSCI_1
-- CO_CZEKA_NA_GOSCI_2
-- OPINIE_POZYTYWNE_1
-- OPINIE_NEGATYWNE_1
-- INFORMACJE_PRAKTYCZNE_1
+
+- POZNAJ TO MIEJSCE
+- CO_CZEKA NA GOSCI
+- CO_CZEKA NA GOSCI
+- OPINIE POZYTYWNE
+- OPINIE NEGATYWNE
+- INFORMACJE PRAKTYCZNE
 
 Numeracja powinna być ciągła w ramach danej kategorii.
 
@@ -134,16 +142,19 @@ Numeracja powinna być ciągła w ramach danej kategorii.
 - Nie wspominaj o braku opinii, jeśli ich nie dostarczono.
 - Nie wspominaj o braku internetu.
 - Nie dodawaj komentarzy dotyczących jakości, kompletności ani wiarygodności danych wejściowych.
+- Nie generuj tytułów, nagłówków ani osobnych nazw obiektów.
 
 # 5. FORMAT ODPOWIEDZI – JSON
 
 Zwróć wynik wyłącznie w postaci poprawnego obiektu JSON.
 
 Struktura:
+
 - key – nazwa kategorii i numer paragrafu.
 - value – treść jednego paragrafu przypisanego do tej kategorii.
 
 Wymagania techniczne:
+
 - Używaj podwójnych cudzysłowów zgodnie ze standardem JSON.
 - Wszystkie znaki specjalne i cudzysłowy wewnątrz tekstu muszą być prawidłowo escapowane.
 - Nie umieszczaj komentarzy w JSON.
@@ -152,10 +163,12 @@ Wymagania techniczne:
 - Zadbaj o poprawność składniową JSON.
 - Nie umieszczaj kilku paragrafów w jednej wartości.
 - Nie dodawaj kluczy, które nie zawierają żadnej treści.
+- Nigdy nie dodawaj klucza `TYTUŁ`.
+- Nigdy nie zwracaj tytułu ani nagłówka poza obiektem JSON.
 
 Wyjątek od zasady numerowania paragrafów i tłumaczenia nazw kategorii:
-Klucz "website" jest kluczem technicznym zawierającym adres URL, a nie treść opisową,
-nie tłumacz nazwy tego klucza.
+
+Klucz `website` jest kluczem technicznym zawierającym adres URL, a nie treść opisową. Nie tłumacz nazwy tego klucza.
 
 # 6. KONTROLA PRZED ZWRÓCENIEM WYNIKU
 
@@ -169,6 +182,8 @@ Przed wygenerowaniem odpowiedzi sprawdź wewnętrznie:
 6. Czy pominięto wszystkie opinie dotyczące braku internetu i zasięgu?
 7. Czy JSON jest poprawny składniowo?
 8. Czy wynik nie zawiera żadnych dodatkowych komentarzy?
+9. Czy wynik zawiera tytuł lub nagłówek? Jeśli tak, usuń go.
+10. Czy JSON zawiera klucz `TYTUŁ`? Jeśli tak, usuń go.
 
 # OCZEKIWANY REZULTAT
 
@@ -176,4 +191,4 @@ Opis powinien być naturalny, konkretny, przyjemny w odbiorze i zachęcający do
 
 Unikaj stylu raportu, suchego streszczania danych oraz nadmiernej liczby wypunktowań.
 
-Zwróć wyłącznie gotowy opis w formacie JSON.
+Zwróć wyłącznie gotowy opis w formacie JSON, bez żadnego tytułu ani nagłówka.

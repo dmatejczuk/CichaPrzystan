@@ -23,13 +23,9 @@ Write from the perspective of someone presenting the property to a potential gue
 
 Generate a description consisting of paragraphs assigned to the categories listed below. If the input contains additional relevant information, you may introduce additional categories. If information for a particular category is missing, omit that category.
 
-Each paragraph must belong to exactly one category.
+**IMPORTANT: Do not generate a title, property heading, or property name as a separate element. Do not include a TITLE key in the JSON output. Start directly with the first relevant descriptive category.**
 
-## TITLE
-
-Create an attractive, natural title containing the property's name and location, if available.
-
-If the property's name is "unknown property," do not use it in the title. Instead, use a neutral description, such as "A Cozy Place to Stay."
+If the property's name is "unknown property", do not use it anywhere in the description.
 
 ## GET TO KNOW THE PLACE
 
@@ -117,17 +113,18 @@ This is a particularly important part of the task.
 - Do not create empty categories.
 - Omit categories for which relevant information is unavailable.
 - Do not create additional paragraphs merely to fill the structure.
-- The title must also be a separate category.
+- Do not generate a title or heading.
+- Never include a `TITLE` key in the JSON output.
+- Start directly with the first relevant descriptive category.
 
 Example key naming:
 
-- TITLE
-- GET_TO_KNOW_THE_PLACE_1
-- WHAT_GUESTS_CAN_EXPECT_1
-- WHAT_GUESTS_CAN_EXPECT_2
-- POSITIVE_REVIEWS_1
-- NEGATIVE_REVIEWS_1
-- PRACTICAL_INFORMATION_1
+- GET TO KNOW THE PLACE
+- WHAT GUESTS CAN EXPECT
+- WHAT GUESTS CAN EXPECT
+- POSITIVE REVIEWS
+- NEGATIVE REVIEWS
+- PRACTICAL INFORMATION
 
 Numbering must be continuous within each category.
 
@@ -143,6 +140,7 @@ Numbering must be continuous within each category.
 - Do not mention the absence of reviews if none have been provided.
 - Do not mention the lack of internet.
 - Do not add comments regarding the quality, completeness, or reliability of the input data.
+- Do not generate titles, headings, or property names.
 
 # 5. RESPONSE FORMAT – JSON
 
@@ -163,6 +161,8 @@ Technical requirements:
 - Ensure that the JSON syntax is valid.
 - Do not include multiple paragraphs in a single value.
 - Do not add keys that contain no content.
+- Never include a `TITLE` key.
+- Never return a title or heading outside the JSON object.
 
 Exception to the paragraph numbering and category translation rules:
 
@@ -180,6 +180,8 @@ Before generating the response, internally verify:
 6. Have all reviews concerning the lack of internet and network coverage been excluded?
 7. Is the JSON syntactically valid?
 8. Does the result contain any additional commentary?
+9. Does the result contain a title or heading? If yes, remove it.
+10. Does the JSON contain a `TITLE` key? If yes, remove it.
 
 # EXPECTED RESULT
 
@@ -187,4 +189,4 @@ The description should be natural, specific, pleasant to read, and encourage pot
 
 Avoid report-like writing, dry summaries, and excessive bullet points.
 
-Return only the finished description in JSON format.
+Return only the finished description in JSON format, without any title or heading.
