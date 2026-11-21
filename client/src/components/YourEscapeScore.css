@@ -1,0 +1,106 @@
+.escape-score {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 30;
+  width: min(310px, calc(100vw - 40px));
+  overflow: hidden;
+  border-radius: 18px;
+  font-family: inherit;
+  color: white;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  animation: escape-score-appear 0.35s ease-out;
+}
+
+@keyframes escape-score-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.escape-score-header {
+  padding: 18px 20px 16px;
+  background: #225d2c95;
+  backdrop-filter: var(--blur);
+}
+
+.escape-score-title {
+  margin-bottom: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #c2e4d2;
+}
+
+.escape-score-value {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.escape-score-number {
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+
+.escape-score-max {
+  font-size: 17px;
+  font-weight: 500;
+  color: #a8c9b8;
+}
+
+.escape-score-label {
+  margin-top: 7px;
+  font-size: 14px;
+  color: #e5f7ec;
+}
+
+.escape-score-bar {
+  height: 8px;
+  margin-top: 18px;
+  overflow: hidden;
+  background: #416858;
+  border-radius: 20px;
+}
+
+.escape-score-bar-fill {
+  height: 100%;
+  background: #7fe0a1;
+  border-radius: 20px;
+  transition: width 0.6s ease;
+}
+
+.escape-score-note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #e5f7ec;
+}
+
+.escape-score-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 15px 20px;
+  font-size: 13px;
+  color: #1d8c2a;
+  background-color: var(--color-blur);
+  backdrop-filter: var(--blur);
+}
+
+.escape-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.escape-score-row-name {
+  color: #4b534f;
+}

@@ -57,8 +57,12 @@
 }
 
 .place-details-coverage {
-  margin: 0;
-  font-size: 0.9rem;
+  margin: 0 8px;
+  font-size: 1rem;
+}
+
+.place-details-coverage .coverage-city {
+  word-spacing: 7px;
 }
 
 .place-details-website {

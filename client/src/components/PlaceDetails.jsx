@@ -38,9 +38,9 @@ export default function PlaceDetails({ place, saved, onToggleSaved, onBack }) {
       </div>
 
       <div className="place-details-coverage">
-        <p>
+        <p className='coverage-city'>
           {t.stayTypes[place.type]}
-          {place.city && ` · ${place.city}`}
+          {place.city && ` •  ${place.city}`}
         </p>
         <p>
           {place.distanceKm > 0 && `${t.distanceToCoverage}: ${place.distanceKm} km ${t.directions[place.direction] ?? ''}`}
