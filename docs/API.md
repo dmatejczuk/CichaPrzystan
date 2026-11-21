@@ -36,7 +36,7 @@ Errors always have the form `{ "error": "..." }`.
 
 ## GET /api/coverage
 
-Checks mobile coverage at any point, computed on request. It uses the same logic as [`data-pipeline/coverage.py`](../data-pipeline/coverage.py): each cell is a circle with radius `range`, and the 64 nearest cells within 60 km are considered.
+Checks mobile coverage at any point, computed on request. It uses the same logic as [`data-pipeline/coverage.py`](../data-pipeline/coverage.py): each transmitter is a circle with radius `range`, and every transmitter within 60 km is considered. Transmitters come from OpenCelliD measurements and the UKE list of base station permits (see [Data sources](#data-sources)).
 
 | Parameter | Required | Description |
 | --- | --- | --- |
@@ -263,7 +263,7 @@ Takes no parameters and returns the operators present in the data, sorted alphab
 Reports whether the server is running and how much data it has loaded. Use it to check that the pipeline has been run.
 
 ```json
-{ "status": "ok", "towers": 92914, "stays": 27348 }
+{ "status": "ok", "towers": 178808, "stays": 27316 }
 ```
 
 When data is missing it returns `"status": "missing data"` with zero counts (status 200).
@@ -286,10 +286,10 @@ Two static files for the "show dead zones" map layer. These are the only files s
   "cell_size_m": 250,
   "max_color_distance_m": 3000,
   "cells_in_poland": 5068412,
-  "cells_without_coverage": 1471361,
-  "share_without_coverage": 0.2903,
+  "cells_without_coverage": 73239,
+  "share_without_coverage": 0.0145,
   "farthest_from_coverage": [
-    { "lat": 50.37026, "lon": 23.58875, "distance_to_coverage_m": 36604 }
+    { "lat": 49.00743, "lon": 22.88892, "distance_to_coverage_m": 10548 }
   ]
 }
 ```
@@ -323,14 +323,14 @@ The API returns English codes; the Polish UI labels are defined in [`client/src/
 
 | Code (OSM `tourism`) | Meaning | Polish UI label | Count |
 | --- | --- | --- | --- |
-| `guest_house` | Guest house | Pensjonat | 9799 |
-| `chalet` | Chalet / cabin | Domek | 6687 |
-| `hotel` | Hotel | Hotel | 6333 |
-| `camp_site` | Campsite | Pole namiotowe | 1802 |
-| `apartment` | Apartment | Apartament | 1281 |
-| `hostel` | Hostel | Hostel | 1254 |
-| `alpine_hut` | Mountain hut | Schronisko górskie | 129 |
-| `wilderness_hut` | Wilderness hut | Chatka | 63 |
+| `guest_house` | Guest house | Pensjonat | 9787 |
+| `chalet` | Chalet / cabin | Domek | 6686 |
+| `hotel` | Hotel | Hotel | 6326 |
+| `camp_site` | Campsite | Pole namiotowe | 1798 |
+| `apartment` | Apartment | Apartament | 1278 |
+| `hostel` | Hostel | Hostel | 1253 |
+| `alpine_hut` | Mountain hut | Schronisko górskie | 127 |
+| `wilderness_hut` | Wilderness hut | Chatka | 61 |
 
 ### Operators
 
@@ -402,6 +402,15 @@ Server side, the summary endpoint lives in `server/src/summary-routes.js` (route
 
 Quick check: `http://localhost:3000/api/health` should return `"status": "ok"`.
 
-## Data caveat
+## Data sources
 
-Coverage is based on OpenCelliD, a crowdsourced database. Where measurements are missing, the model reports no coverage, so the UI should describe it as "estimated coverage".
+Transmitters (`towers_pl.csv`, `towers_pl.json`) are built from two sources by `data-pipeline/prepare_towers.py`:
+
+| Source | What it gives | Limitations |
+| --- | --- | --- |
+| [OpenCelliD](https://opencellid.org) | Cells measured by app users, with an estimated range per cell | Only cells seen recently, so whole towns can be missing (e.g. Brodnica, Bytów) |
+| [UKE base station permits](https://bip.uke.gov.pl/pozwolenia-radiowe/wykaz-pozwolen-radiowych-tresci/stacje-gsm-umts-lte-5gnr-oraz-cdma,12,0.html) | Official list of licensed sites of Orange, T-Mobile, Play and Plus, one XLSX per band, updated monthly | A permit does not guarantee that the site is built; no ranges are published; Plus has only a few hundred entries |
+
+UKE ranges are assumed per band: 6 km for 700–900 MHz, 3 km for 1800 MHz, 2.5 km for 2100 MHz, 1.5 km for 2600 MHz and 1 km for 3600 MHz. With both sources about 1.5% of Poland comes out without coverage; with OpenCelliD alone it was 29%.
+
+The model ignores terrain, so coverage in deep mountain valleys may be overestimated and the UI should still describe it as "estimated coverage". The pipeline downloads the UKE lists into `data/uke/`; delete that folder to fetch the latest month.

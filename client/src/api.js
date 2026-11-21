@@ -116,7 +116,7 @@ export const fetchGeocode = (q, { signal } = {}) => http.get('/api/geocode', { p
 
 // Search radii around a point (user position or a found town), in km. Coverage is dense around
 // big cities, so the area grows until it holds at least MIN_RESULTS quiet stays.
-const SEARCH_RADII_KM = [25, 50, 75, 100]
+const SEARCH_RADII_KM = [25, 50, 75, 100, 150, 200]
 const MIN_RESULTS = 5
 // Longest list shown in the results panel; the server already sorts the quietest stays first.
 const MAX_RESULTS = 50

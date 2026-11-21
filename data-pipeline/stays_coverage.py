@@ -16,6 +16,9 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", Path(__file__).resolve().parent.paren
 STAYS_FILE = DATA_DIR / "stays.geojson"
 TOWERS_FILE = DATA_DIR / "towers_pl.csv"
 PLACES_FILE = DATA_DIR / "places.geojson"
+# Width of the band along the border (in grid cells, ~250 m each) where the raster
+# mask is not trusted on its own.
+BORDER_BAND_CELLS = 4
 OUTPUT_FILE = DATA_DIR / "stays_coverage.geojson"
 
 STAY_TYPES = {
@@ -36,27 +39,59 @@ class PolandMask:
         grown[:, 1:] |= mask[:, :-1]
         grown[:, :-1] |= mask[:, 1:]
         self.mask = grown
+        core = mask.copy()
+        for _ in range(BORDER_BAND_CELLS):
+            shrunk = core.copy()
+            shrunk[1:, :] &= core[:-1, :]
+            shrunk[:-1, :] &= core[1:, :]
+            shrunk[:, 1:] &= core[:, :-1]
+            shrunk[:, :-1] &= core[:, 1:]
+            core = shrunk
+        self.core = core
 
-    def contains(self, lon, lat):
+    def _cell(self, lon, lat):
         row = int(np.floor(self.grid.row(lat)))
         col = int(np.floor(self.grid.col(lon)))
-        return 0 <= row < self.grid.height and 0 <= col < self.grid.width and bool(self.mask[row, col])
+        inside = 0 <= row < self.grid.height and 0 <= col < self.grid.width
+        return (row, col) if inside else None
+
+    def contains(self, lon, lat):
+        cell = self._cell(lon, lat)
+        return cell is not None and bool(self.mask[cell])
+
+    def near_border(self, lon, lat):
+        """True for points within BORDER_BAND_CELLS of the border."""
+        cell = self._cell(lon, lat)
+        return cell is not None and bool(self.mask[cell]) and not self.core[cell]
 
 
 class NearestPlace:
-    """Name of the nearest settlement, used when a stay has no address."""
+    """Nearest settlements; the OSM extract also contains places just across the border."""
 
-    def __init__(self, path):
+    def __init__(self, path, poland):
         with open(path, encoding="utf-8") as f:
             features = [f for f in json.load(f)["features"] if f["properties"].get("name")]
         lon = np.array([f["geometry"]["coordinates"][0] for f in features])
         lat = np.array([f["geometry"]["coordinates"][1] for f in features])
         self.names = [f["properties"]["name"] for f in features]
+        self.polish = np.array([poland.contains(x, y) for x, y in zip(lon, lat)])
         self.tree = cKDTree(to_xyz(lon, lat))
+        self.polish_index = np.flatnonzero(self.polish)
+        self.polish_tree = cKDTree(to_xyz(lon[self.polish], lat[self.polish]))
+
+    @staticmethod
+    def _point(lon, lat):
+        return to_xyz(np.array([lon]), np.array([lat]))[0]
 
     def name(self, lon, lat):
-        _, i = self.tree.query(to_xyz(np.array([lon]), np.array([lat]))[0])
-        return self.names[i]
+        """Name of the nearest Polish settlement, used when a stay has no address."""
+        _, i = self.polish_tree.query(self._point(lon, lat))
+        return self.names[self.polish_index[i]]
+
+    def is_abroad(self, lon, lat):
+        """True when the nearest settlement of any country lies outside Poland."""
+        _, i = self.tree.query(self._point(lon, lat))
+        return not self.polish[i]
 
 
 def iter_coordinates(coords):
@@ -93,7 +128,7 @@ def main():
 
     index = CoverageIndex.from_csv(TOWERS_FILE)
     poland = PolandMask()
-    nearest_place = NearestPlace(PLACES_FILE)
+    nearest_place = NearestPlace(PLACES_FILE, poland)
     seen = set()
     outside = 0
     output = []
@@ -108,7 +143,9 @@ def main():
         seen.add(stay_id)
 
         lon, lat = representative_point(feature["geometry"])
-        if not poland.contains(lon, lat):
+        # The border mask is a ~250 m raster, so points next to it are checked against
+        # the nearest settlement (e.g. guest houses on the German bank of the Oder).
+        if not poland.contains(lon, lat) or (poland.near_border(lon, lat) and nearest_place.is_abroad(lon, lat)):
             outside += 1
             continue
         result = index.check(lat, lon)

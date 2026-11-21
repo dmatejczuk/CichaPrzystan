@@ -86,7 +86,7 @@ app.use(corsMiddleware)
 app.get('/api/health', (req, res) => {
   res.json({
     status: coverage && stays ? 'ok' : 'missing data',
-    towers: coverage ? coverage.towers.length : 0,
+    towers: coverage ? coverage.towerCount : 0,
     stays: stays ? stays.size : 0,
   })
 })

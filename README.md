@@ -4,7 +4,7 @@ Map of accommodation in Poland located in places without mobile coverage.
 
 ## Structure
 
-- `data/` – input files (`260.csv.gz`, `poland-latest.osm.pbf`) and generated outputs (git-ignored)
+- `data/` – input files (`260.csv.gz`, `poland-latest.osm.pbf`, `uke/*.xlsx`) and generated outputs (git-ignored)
 - `data-pipeline/` – Python data preparation (run once)
 - `server/` – Express API (Node.js 22)
 - `client/` – Vite + React frontend
@@ -45,3 +45,5 @@ Data (not stored in this repository, generated into `data/`):
   Derived files (`stays.geojson`, `stays_coverage.geojson`, `places.geojson`, `poland_border.geojson`) are also ODbL.
 - Cell tower data: [OpenCelliD](https://opencellid.org), licensed under [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
   Derived files (`towers_pl.*`, `dead_zones.*`) are shared under the same license.
+- Base station permits: [UKE](https://bip.uke.gov.pl) (Urząd Komunikacji Elektronicznej), public information,
+  combined with OpenCelliD in `towers_pl.*`.
