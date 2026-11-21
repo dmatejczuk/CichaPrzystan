@@ -3,6 +3,7 @@ import { useLanguage } from '../language/useLanguage.js'
 
 export default function ResultItem({ place, saved, onSelect, onToggleSaved }) {
   const { t } = useLanguage()
+  const distanceKm = place.distanceKm === 0 ? 0.1 : place.distanceKm
 
   return (
     <li className="result-item">
@@ -12,7 +13,7 @@ export default function ResultItem({ place, saved, onSelect, onToggleSaved }) {
           <strong>{place.name ?? t.stayTypes[place.type]}</strong>
           <span>{place.city}</span>
         </span>
-        <span title={t.distanceToCoverage}>{place.distanceKm} km</span>
+        <span title={t.distanceToCoverage}>{distanceKm} km</span>
         <span className="btn result-item-button">
           {t.next} &gt;
         </span>
